@@ -11,6 +11,7 @@
 from objects.pcc_emulator import PccEmulator
 from utils import analyze_pcc_emulator
 import os, sys, inspect
+from config.constant import *
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -26,10 +27,11 @@ if __name__ == '__main__':
 
     emulator = PccEmulator(
         block_file=block_file,
-        trace_file=trace_file
+        trace_file=trace_file,
+        queue_range=(MIN_QUEUE, MAX_QUEUE)
     )
 
-    print(emulator.run_for_dur(0.5))
+    print(emulator.run_for_dur(1))
     emulator.dump_events_to_file(log_file)
     emulator.print_debug()
     print(emulator.senders[0].rtt_samples)

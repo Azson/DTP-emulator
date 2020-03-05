@@ -25,6 +25,7 @@ class Block(object):
         self.finish_timestamp = -1
         self.miss_ddl = 0
         self.split_nums = -1
+        self.finished_bytes = 0
 
 
     @classmethod

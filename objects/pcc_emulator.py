@@ -1,4 +1,4 @@
-import json
+import json, random
 import numpy as np
 
 from utils import (
@@ -61,10 +61,8 @@ class PccEmulator(object):
         # queue = 1 + int(np.exp(random.uniform(*self.queue_range)))
         # print("queue size : %d" % queue)
         # bw = self.trace_list[0][1]
-        bw    = 705 # true bw is bw*BYTES_PER_PACKET
-        lat   = 0.03
-        queue = 5
-        loss  = 0.00
+
+        queue = int(random.uniform(*self.queue_range))
         self.links = [Link(self.trace_list, queue) , Link(self.trace_list, queue)]
         #self.senders = [Sender(0.3 * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         #self.senders = [Sender(random.uniform(0.2, 0.7) * bw, [self.links[0], self.links[1]], 0, self.history_len)]

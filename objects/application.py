@@ -2,6 +2,7 @@ from objects.block import Block
 from objects.packet import Packet
 import numpy as np
 
+
 class Appication_Layer(object):
 
 
@@ -65,7 +66,6 @@ class Appication_Layer(object):
                 self.block_queue[idx].miss_ddl = 1
                 self.log_block(self.block_queue[idx])
                 need_filter.append(idx)
-                # print(now_time, item.timestamp, item.deadline)
 
             elif best_block == None or is_better(item) :
                 best_block = item
@@ -107,8 +107,8 @@ class Appication_Layer(object):
                     return None
 
                 self.now_block_offset = 0
-                # self.split_nums = int(np.ceil(self.now_block.size / self.bytes_per_packet))
-                self.now_block.split_nums = int(np.ceil(self.now_block.size / self.bytes_per_packet))
+                self.now_block.split_nums = int(np.ceil(self.now_block.size /
+                                                (self.bytes_per_packet - self.head_per_packet)))
                 self.blocks_status[self.now_block.block_id] = self.now_block
 
         payload = self.bytes_per_packet - self.head_per_packet
@@ -132,16 +132,23 @@ class Appication_Layer(object):
 
 
     def update_block_status(self, packet):
+        # filter repeating acked packet
+        if packet.block_id in self.ack_blocks and   \
+            packet.offset in self.ack_blocks[packet.block_id]:
+            return
+
+        # update block information.
+        # Which is better? Save packet individual value or sum value
+        self.blocks_status[packet.block_id].send_delay += packet.send_delay
+        self.blocks_status[packet.block_id].queue_delay += packet.queue_delay
+        self.blocks_status[packet.block_id].propagation_delay += packet.propagation_delay
+        self.blocks_status[packet.block_id].finished_bytes += packet.payload
+
         if packet.block_id not in self.ack_blocks:
             self.ack_blocks[packet.block_id] = [packet.offset]
         # retransmission packet may be sended many times
-        elif packet.offset not in self.ack_blocks[packet.block_id]:
+        else:
             self.ack_blocks[packet.block_id].append(packet.offset)
-            # update block information.
-            # Which is better? Save packet individual value or sum value
-            self.blocks_status[packet.block_id].send_delay += packet.send_delay
-            self.blocks_status[packet.block_id].queue_delay += packet.queue_delay
-            self.blocks_status[packet.block_id].propagation_delay += packet.propagation_delay
             # Assuming every block can be split into more than 1 packet.
             if self.is_sended_block(packet.block_id):
                 self.log_block(self.blocks_status[packet.block_id])

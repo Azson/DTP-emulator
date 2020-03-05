@@ -1,5 +1,6 @@
 import heapq, random
 from config.constant import *
+from utils import get_packet_type
 
 
 class Engine():
@@ -166,6 +167,7 @@ class Engine():
                 "event_time" : event_time,
                 "link_rate" : -1 if packet.next_hop == 0 else sender.path[packet.next_hop-1].bandwith,
                 "send_rate" : sender.rate,
+                "packet_type" : get_packet_type(sender, packet),
                 "packet" : packet.trans2dict()
             }
         # todo : how to design system information
@@ -174,4 +176,7 @@ class Engine():
 
             }
 
-        sender.solution.input_list.append(data)
+        feed_back = sender.solution.append_input(data)
+        if feed_back:
+            sender.cwnd = feed_back["cwnd"]
+            sender.rate = feed_back["send_rate"]
