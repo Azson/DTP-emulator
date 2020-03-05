@@ -1,6 +1,7 @@
 from objects.block import Block
 from objects.packet import Packet
 import numpy as np
+from player import block_selection
 
 
 class Appication_Layer(object):
@@ -26,6 +27,7 @@ class Appication_Layer(object):
         self.create_block_by_file(create_det)
         self.ack_blocks = dict()
         self.blocks_status = dict()
+        self.block_selection = block_selection.Solution()
 
 
     def create_block_by_file(self, det=0.1):
@@ -51,34 +53,23 @@ class Appication_Layer(object):
 
     def select_block(self):
 
-        def is_better(block):
-            return (now_time - block.timestamp) * best_block.deadline > \
-                    (now_time - best_block.timestamp) * block.deadline
+        cur_time = self.init_time + self.pass_time
+        # call player's code
+        best_block_idx = self.block_selection.select_block(cur_time, self.block_queue)
+        if best_block_idx == -1:
+            return None
+        best_block = self.block_queue[best_block_idx]
 
-
-        now_time = self.init_time + self.pass_time
-        best_block = None
-        ch = -1
-        need_filter = []
-        for idx, item in enumerate(self.block_queue):
+        self.block_queue.pop(best_block_idx)
+        # filter block with missing ddl
+        for idx in range(len(self.block_queue)-1, -1, -1):
+            item = self.block_queue[idx]
             # if miss ddl in queue, clean and log
-            if now_time > item.timestamp + item.deadline:
+            if cur_time > item.timestamp + item.deadline:
                 self.block_queue[idx].miss_ddl = 1
                 self.log_block(self.block_queue[idx])
-                need_filter.append(idx)
+                self.block_queue.pop(idx)
 
-            elif best_block == None or is_better(item) :
-                best_block = item
-                ch = idx
-
-        # filter block with missing ddl
-        for idx in range(len(need_filter)-1, -1, -1):
-            if ch != -1 and ch > idx:
-                self.block_queue.pop(ch)
-                ch = -1
-            self.block_queue.pop(need_filter[idx])
-        if ch != -1:
-            self.block_queue.pop(ch)
         return best_block
 
 

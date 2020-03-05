@@ -158,7 +158,24 @@ def get_packet_type(sender, packet):
     return PACKET_TYPE_TEMP
 
 
+def plot_cwnd(log_file):
+    plt_data = []
+    with open(log_file, "r") as f:
+        for line in f.readlines():
+            plt_data.append(json.loads(line.replace("'", '"')))
+
+    data_time = []
+    data_cwnd = []
+    for item in plt_data:
+        data_time.append(item["Time"])
+        data_cwnd.append(item["Cwnd"])
+
+    plt.plot(data_time, data_cwnd)
+    plt.savefig("output/cwnd_changing.png")
+
+
 if __name__ == '__main__':
 
     log_packet_file = "output/pcc_emulator_packet.log"
-    analyze_pcc_emulator(log_packet_file)
+    # analyze_pcc_emulator(log_packet_file)
+    plot_cwnd(log_packet_file)

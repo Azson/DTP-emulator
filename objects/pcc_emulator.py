@@ -8,7 +8,7 @@ from objects.sender import Sender
 from objects.link import Link
 from objects.engine import Engine
 
-from congestion_control_algorithm import Solution
+from player import congestion_control_algorithm
 
 
 class PccEmulator(object):
@@ -33,9 +33,6 @@ class PccEmulator(object):
         self.senders = None
         self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
-
-        # for player
-        self.solution = Solution()
 
 
     def get_trace(self):
@@ -67,7 +64,7 @@ class PccEmulator(object):
         #self.senders = [Sender(0.3 * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         #self.senders = [Sender(random.uniform(0.2, 0.7) * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         self.senders = [Sender([self.links[0], self.links[1] ], 0, self.features,
-                               history_len=self.history_len, solution=Solution())]
+                               history_len=self.history_len, solution=congestion_control_algorithm.Solution())]
         for item in self.senders:
             item.init_application(self.block_file)
 

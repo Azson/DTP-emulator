@@ -48,7 +48,7 @@ class Engine():
                 return
 
             event_time, sender, packet = heapq.heappop(self.q)
-            self.log_packet(event_time, packet)
+            self.log_packet(event_time, sender, packet)
             self.append_cc_input(event_time, sender, packet)
 
             event_type, next_hop, cur_latency, dropped, life, packet_id = packet.parse()
@@ -139,7 +139,7 @@ class Engine():
         return reward * REWARD_SCALE
 
 
-    def log_packet(self, event_time, packet):
+    def log_packet(self, event_time, sender, packet):
         '''
         packet is tuple of (event_time, sender, event_type, next_hop, cur_latency, dropped, packet_id, life)
         :param packet: tuple
@@ -151,7 +151,11 @@ class Engine():
             with open(self.log_packet_file, "w") as f:
                 pass
 
-        log_data = { "Time" : event_time }
+        log_data = {
+            "Time" : event_time,
+            "Cwnd" : sender.cwnd,
+            "Send_rate" : sender.rate
+        }
         log_data.update(packet.trans2dict())
 
         with open(self.log_packet_file, "a") as f:
