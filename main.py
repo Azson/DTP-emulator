@@ -9,7 +9,7 @@
 '''
 
 from objects.pcc_emulator import PccEmulator
-from utils import analyze_pcc_emulator
+from utils import analyze_pcc_emulator, plot_cwnd
 import os, sys, inspect
 from config.constant import *
 
@@ -37,3 +37,4 @@ if __name__ == '__main__':
     print(emulator.senders[0].rtt_samples)
     print(emulator.senders[0].application.ack_blocks)
     analyze_pcc_emulator(log_packet_file, trace_file)
+    plot_cwnd(log_packet_file)

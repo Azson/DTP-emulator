@@ -47,7 +47,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=1000):
             if item["Deadline"] < data_sum_time[-1]:
                 data_miss_ddl.append(len(data_finish_time)-1)
 
-    plt.figure(figsize=(20, 5*pic_nums))
+    pic = plt.figure(figsize=(20, 5*pic_nums))
     # plot latency distribution
     ax = plt.subplot(pic_nums, 1, 1)
     ax.set_title("Acked packet latency distribution", fontsize=30)
@@ -169,7 +169,7 @@ def plot_cwnd(log_file):
     for item in plt_data:
         data_time.append(item["Time"])
         data_cwnd.append(item["Cwnd"])
-
+    pic = plt.figure(figsize=(10, 10))
     plt.plot(data_time, data_cwnd)
     plt.savefig("output/cwnd_changing.png")
 

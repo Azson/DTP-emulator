@@ -12,6 +12,7 @@ class Solution(object):
         self.curr_state = "slow_start"
         self.states = ["slow_start", "congestion_avoidance", "fast_recovery"]
 
+
     def make_decision(self):
         self.call_nums += 1
 
@@ -24,7 +25,7 @@ class Solution(object):
 
 
     def cc_trigger(self, data):
-        print(self.cwnd)
+
         packet_type = data["packet_type"]
 
         while True:
@@ -47,9 +48,6 @@ class Solution(object):
                 self.cwnd = self.ssthresh
                 self.curr_state = self.states[1]
                 break
-
-
-
 
 
     def append_input(self, data):
