@@ -11,13 +11,15 @@
 import time, json
 from matplotlib import pyplot as plt
 import numpy as np
+from config.constant import *
+
 
 def get_ms_time(rate=1000):
 
     return time.time()*rate
 
 
-def analyze_pcc_emulator(log_file, trace_file=None, rows=20):
+def analyze_pcc_emulator(log_file, trace_file=None, rows=1000):
 
     plt_data = []
 
@@ -27,7 +29,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=20):
 
     plt_data = filter(lambda x:x["Type"]=='A' and x["Position"] == 2, plt_data)
     # priority by packet id
-    plt_data = sorted(plt_data, key=lambda x:int(x["Packet_id"]))
+    plt_data = sorted(plt_data, key=lambda x:int(x["Packet_id"]))[:rows]
 
     pic_nums = 3
     data_lantency = []
@@ -140,6 +142,20 @@ def get_emulator_info(sender_mi):
     # event["Cwnd Used"] = sender_mi.cwnd_used
 
     return event
+
+
+def analyze_application(acked_packets):
+    pass
+
+
+def get_packet_type(sender, packet):
+    if packet.drop:
+        return PACKET_TYPE_DROP
+    if packet.packet_type == EVENT_TYPE_ACK and \
+        packet.next_hop == len(sender.path):
+        return PACKET_TYPE_FINISHED
+
+    return PACKET_TYPE_TEMP
 
 
 if __name__ == '__main__':
