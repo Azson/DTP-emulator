@@ -30,6 +30,7 @@ class Sender():
         self.starting_rate = self.rate
 
         self.application = None
+        self.wait_for_push_packets = []
 
 
     _next_id = 1
@@ -119,6 +120,10 @@ class Sender():
             self.cwnd = MAX_CWND
         if self.cwnd < MIN_CWND:
             self.cwnd = MIN_CWND
+
+
+    def get_used_cwnd(self):
+        return int(self.bytes_in_flight) // BYTES_PER_PACKET
 
 
     def record_run(self):

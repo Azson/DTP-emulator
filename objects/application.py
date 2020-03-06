@@ -102,6 +102,8 @@ class Appication_Layer(object):
                                                 (self.bytes_per_packet - self.head_per_packet)))
                 self.blocks_status[self.now_block.block_id] = self.now_block
 
+        if self.now_block is None:
+            return None
         payload = self.bytes_per_packet - self.head_per_packet
         if self.now_block.size % (self.bytes_per_packet - self.head_per_packet) and \
                 self.now_block_offset == self.now_block.split_nums - 1:

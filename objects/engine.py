@@ -49,7 +49,6 @@ class Engine():
 
             event_time, sender, packet = heapq.heappop(self.q)
             self.log_packet(event_time, sender, packet)
-            self.append_cc_input(event_time, sender, packet)
 
             event_type, next_hop, cur_latency, dropped, life, packet_id = packet.parse()
             # print("Got event %s, to link %d, latency %f at time %f" % (event_type, next_hop, cur_latency, event_time))
@@ -64,12 +63,23 @@ class Engine():
             if event_type == EVENT_TYPE_ACK:
                 # got ack in source or destination
                 if next_hop == len(sender.path):
+                    self.append_cc_input(event_time, sender, packet)
                     if dropped:
                         sender.on_packet_lost()
                         # print("Packet lost at time %f" % self.cur_time)
                     else:
                         sender.on_packet_acked(cur_latency, packet)
                         # print("Packet acked at time %f" % self.cur_time)
+                    # for reno
+                    for i in range(0, sender.cwnd - sender.get_used_cwnd()):
+                        if len(sender.wait_for_push_packets) == 0:
+                            _packet = sender.new_packet(self.cur_time + (1.0 / sender.rate))
+                            if _packet is None:
+                                break
+                        else:
+                            _packet = sender.wait_for_push_packets.pop(0)[2]
+                        heapq.heappush(self.q, (self.cur_time, sender, _packet))
+
                 # ack back to source
                 else:
                     new_next_hop = next_hop + 1
@@ -87,7 +97,10 @@ class Engine():
                         push_new_event = True
                     _packet = sender.new_packet(self.cur_time + (1.0 / sender.rate))
                     if _packet:
-                        heapq.heappush(self.q, (self.cur_time + (1.0 / sender.rate), sender, _packet))
+                        if sender.cwnd > 1 + len(self.q) + len(sender.wait_for_push_packets):
+                            heapq.heappush(self.q, (self.cur_time + (1.0 / sender.rate), sender, _packet))
+                        else:
+                            sender.wait_for_push_packets.append([event_time, sender, _packet])
 
                 else:
                     push_new_event = True
@@ -154,7 +167,8 @@ class Engine():
         log_data = {
             "Time" : event_time,
             "Cwnd" : sender.cwnd,
-            "Send_rate" : sender.rate
+            # "Send_rate" : sender.rate,
+            "Used_cwnd" : sender.get_used_cwnd()
         }
         log_data.update(packet.trans2dict())
 

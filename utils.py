@@ -158,24 +158,95 @@ def get_packet_type(sender, packet):
     return PACKET_TYPE_TEMP
 
 
-def plot_cwnd(log_file):
+def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None):
     plt_data = []
     with open(log_file, "r") as f:
         for line in f.readlines():
             plt_data.append(json.loads(line.replace("'", '"')))
+    # filter the packet at sender
+    plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0, plt_data))
+    # filter by the time
+    if time_range:
+        if time_range[0] is None:
+            time_range[0] = -1
+        if time_range[1] is None:
+            time_range[1] = plt_data[-1]["Time"]
+        plt_data = list(filter(lambda x: time_range[0] <= x["Time"] <= time_range[1], plt_data))
+    # plot "rows" counts data
+    if isinstance(rows, int):
+        plt_data = plt_data[:rows]
+
+    pic_nums = 1
+    font_size = 30
 
     data_time = []
     data_cwnd = []
+    data_Ucwnd = []
+    last_cwnd = -1
     for item in plt_data:
+        if item["Cwnd"] == last_cwnd:
+            continue
+        last_cwnd = item["Cwnd"]
         data_time.append(item["Time"])
         data_cwnd.append(item["Cwnd"])
-    pic = plt.figure(figsize=(10, 10))
-    plt.plot(data_time, data_cwnd)
+        data_Ucwnd.append(item["Used_cwnd"])
+
+    pic = plt.figure(figsize=(50, 30*pic_nums))
+    # plot cwnd changing
+    ax = plt.subplot(pic_nums, 1, 1)
+    ax.plot(data_time, data_cwnd, label="cwnd", c='g')
+    ax.set_ylabel("Packet", fontsize=font_size)
+    plt.tick_params(labelsize=20)
+    plt.legend(fontsize=font_size)
+
+    # # plot used cwnd changing
+    # ax = plt.subplot(pic_nums, 1, 2)
+    # ax.scatter(data_time, data_Ucwnd, c='y', label="used_cwnd")
+    # ax.set_ylabel("Packet", fontsize=20)
+    # ax.set_xlabel("Time (s)", fontsize=20)
+    # plt.tick_params(labelsize=20)
+    # plt.legend(fontsize=20)
+
+    # plot bandwith
+    if trace_file:
+        max_time = data_time[-1]
+        trace_list = []
+        with open(trace_file, "r") as f:
+            for line in f.readlines():
+                trace_list.append(list(
+                    map(lambda x: float(x), line.split(","))
+                ))
+
+        st = data_time[0]
+        ax = ax.twinx()
+        ed = -1
+        for idx in range(1, len(trace_list)):
+            if trace_list[idx][0] < st:
+                continue
+            if trace_list[idx][0] > max_time:
+                ed = idx
+                break
+            ax.plot([st, trace_list[idx][0]], [trace_list[idx-1][1] ] * 2, '--',
+                     linewidth=5)
+            st = trace_list[idx][0]
+
+        if ed == -1 and trace_list[-1][0] < max_time:
+            ax.plot([st, max_time], [trace_list[-1][1]] * 2, '--',
+                    label="Different Bandwith", linewidth=5)
+        elif ed != -1:
+            ax.plot([st, max_time], [trace_list[ed-1][1]] * 2, '--',
+                    label="Different Bandwith", linewidth=5)
+
+        ax.set_ylabel("Link bandwith (MB/s)", fontsize=font_size)
+        plt.tick_params(labelsize=20)
+        plt.legend(fontsize=font_size)
+
     plt.savefig("output/cwnd_changing.png")
 
 
 if __name__ == '__main__':
 
     log_packet_file = "output/pcc_emulator_packet.log"
-    # analyze_pcc_emulator(log_packet_file)
-    plot_cwnd(log_packet_file)
+    trace_file = "config/trace.txt"
+    analyze_pcc_emulator(log_packet_file)
+    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[0, 0.03])
