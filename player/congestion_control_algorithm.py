@@ -13,7 +13,7 @@ class Solution(object):
         self.states = ["slow_start", "congestion_avoidance", "fast_recovery"]
         self.drop_nums = 0
         self.ack_nums = 0
-
+        self.pre_data = None
 
     def make_decision(self):
         self.call_nums += 1
@@ -41,11 +41,16 @@ class Solution(object):
                     self.curr_state = self.states[1]
 
             elif self.curr_state == self.states[1]:
-                self.cwnd += 1
+                if self.pre_data["packet_type"] == PACKET_TYPE_DROP and \
+                        (data["packet"]["Block_id"] != self.pre_data["packet"]["Block_id"] or
+                         data["packet"]["Offset"] != self.pre_data["packet"]["Offset"]):
+                    self.cwnd = self.ssthresh
+                else:
+                    self.cwnd += 1
 
         if self.curr_state == self.states[2]:
-            self.ssthresh = self.cwnd // 2 + 3
-            self.cwnd = self.ssthresh
+            self.ssthresh = self.cwnd // 2
+            self.cwnd = self.ssthresh + 3
             self.curr_state = self.states[1]
         if self.drop_nums == 0:
             print(self.drop_nums, self.ack_nums)
@@ -56,6 +61,7 @@ class Solution(object):
 
         if data["packet_type"] != PACKET_TYPE_TEMP:
             self.cc_trigger(data)
+            self.pre_data = data
             return {
                 "cwnd" : self.cwnd,
                 "send_rate" : self.send_rate
