@@ -10,7 +10,7 @@ class Solution(object):
         self.send_rate = np.inf
         self.ssthresh = np.inf
         self.curr_state = "slow_start"
-        self.states = ["slow_start", "congestion_avoidance", "fast_recovery"]
+        self.states = ["slow_start", "congestion_avoidance", "fast_recovery", "stay_fast_recovery"]
         self.drop_nums = 0
         self.ack_nums = 0
         self.pre_data = None
@@ -36,22 +36,33 @@ class Solution(object):
         elif packet_type == PACKET_TYPE_FINISHED:
             self.ack_nums += 1
             if self.curr_state == self.states[0]:
-                self.cwnd *= 2
+                self.cwnd += 1
                 if self.cwnd >= self.ssthresh:
                     self.curr_state = self.states[1]
 
             elif self.curr_state == self.states[1]:
-                if self.pre_data["packet_type"] == PACKET_TYPE_DROP and \
-                        (data["packet"]["Block_id"] != self.pre_data["packet"]["Block_id"] or
-                         data["packet"]["Offset"] != self.pre_data["packet"]["Offset"]):
-                    self.cwnd = self.ssthresh
-                else:
-                    self.cwnd += 1
+                self.cwnd += 1 / self.cwnd
 
         if self.curr_state == self.states[2]:
             self.ssthresh = self.cwnd // 2
             self.cwnd = self.ssthresh + 3
-            self.curr_state = self.states[1]
+            self.curr_state = self.states[3]
+
+        if self.curr_state == self.states[3]:
+            if packet_type == PACKET_TYPE_DROP:
+                self.curr_state = self.states[2]
+                self.drop_nums += 1
+            elif packet_type == PACKET_TYPE_FINISHED:
+                # if receive duplicated ack
+                if self.pre_data["packet_type"] == PACKET_TYPE_DROP and \
+                        (data["packet"]["Block_id"] == self.pre_data["packet"]["Block_id"] and
+                         data["packet"]["Offset"] == self.pre_data["packet"]["Offset"]):
+                    self.cwnd += 1
+                else:
+                    self.cwnd = self.ssthresh
+                    self.curr_state = self.states[1]
+
+
         if self.drop_nums == 0:
             print(self.drop_nums, self.ack_nums)
 
