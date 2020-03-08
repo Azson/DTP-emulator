@@ -1,5 +1,7 @@
 from config.constant import *
 import numpy as np
+from utils import debug_print
+
 
 class Solution(object):
 
@@ -13,6 +15,9 @@ class Solution(object):
         self.states = ["slow_start", "congestion_avoidance", "fast_recovery"]
         self.drop_nums = 0
         self.ack_nums = 0
+
+        self.cur_time = -1
+        self.last_cwnd = 0
 
 
     def make_decision(self):
@@ -29,26 +34,43 @@ class Solution(object):
     def cc_trigger(self, data):
 
         packet_type = data["packet_type"]
+        event_time = data["event_time"]
 
         if packet_type == PACKET_TYPE_DROP:
             self.curr_state = self.states[2]
             self.drop_nums += 1
+            self.ack_nums = 0
+
+            # Ref 1 : For ensuring the event type, drop or ack?
+            self.cur_time = event_time
+            if self.last_cwnd != self.cwnd:
+                self.cwnd = self.last_cwnd
+
         elif packet_type == PACKET_TYPE_FINISHED:
+            # Ref 1
+            if event_time <= self.cur_time:
+                return
+            self.cur_time = event_time
+            self.last_cwnd = self.cwnd
+
             self.ack_nums += 1
             if self.curr_state == self.states[0]:
-                self.cwnd *= 2
+                if self.ack_nums == self.cwnd:
+                    self.cwnd *= 2
+                    self.ack_nums = 0
                 if self.cwnd >= self.ssthresh:
                     self.curr_state = self.states[1]
 
             elif self.curr_state == self.states[1]:
-                self.cwnd += 1
+                if self.ack_nums == self.cwnd:
+                    self.cwnd += 1
 
         if self.curr_state == self.states[2]:
             self.ssthresh = self.cwnd // 2 + 3
             self.cwnd = self.ssthresh
             self.curr_state = self.states[1]
         if self.drop_nums == 0:
-            print(self.drop_nums, self.ack_nums)
+            debug_print(self.drop_nums, self.ack_nums)
 
 
     def append_input(self, data):

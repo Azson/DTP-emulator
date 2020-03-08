@@ -122,7 +122,7 @@ class Sender():
             self.cwnd = MIN_CWND
 
 
-    def get_used_cwnd(self):
+    def get_waiting_ack_nums(self):
         return int(self.bytes_in_flight) // BYTES_PER_PACKET
 
 

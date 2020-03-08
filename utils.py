@@ -158,6 +158,11 @@ def get_packet_type(sender, packet):
     return PACKET_TYPE_TEMP
 
 
+def debug_print(*args, **kwargs):
+    if ENABLE_DEBUG:
+        print(*args, **kwargs)
+
+
 def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None):
     plt_data = []
     with open(log_file, "r") as f:
@@ -165,6 +170,7 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None):
             plt_data.append(json.loads(line.replace("'", '"')))
     # filter the packet at sender
     plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0, plt_data))
+    # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
     # filter by the time
     if time_range:
         if time_range[0] is None:
@@ -189,7 +195,7 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None):
         last_cwnd = item["Cwnd"]
         data_time.append(item["Time"])
         data_cwnd.append(item["Cwnd"])
-        data_Ucwnd.append(item["Used_cwnd"])
+        data_Ucwnd.append(item["Waiting_for_ack_nums"])
 
     pic = plt.figure(figsize=(50, 30*pic_nums))
     # plot cwnd changing
@@ -249,4 +255,4 @@ if __name__ == '__main__':
     log_packet_file = "output/pcc_emulator_packet.log"
     trace_file = "config/trace.txt"
     analyze_pcc_emulator(log_packet_file)
-    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[0, 0.03])
+    plot_cwnd(log_packet_file, None, trace_file=trace_file)

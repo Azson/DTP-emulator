@@ -71,18 +71,13 @@ class Engine():
                         sender.on_packet_acked(cur_latency, packet)
                         # print("Packet acked at time %f" % self.cur_time)
                     # for reno
-                    for i in range(0, sender.cwnd - sender.get_used_cwnd()):
-                        if len(sender.wait_for_push_packets) == 0:
-                            _packet = sender.new_packet(self.cur_time + (1.0 / sender.rate))
-                            if _packet is None:
-                                break
-                        else:
-                            _packet = sender.wait_for_push_packets.pop(0)[2]
+                    while _packet in sender.slide_windows(self.cur_time):
                         heapq.heappush(self.q, (self.cur_time, sender, _packet))
 
                 # ack back to source
                 else:
                     new_next_hop = next_hop + 1
+                    # bug : not update last enter link time. How treat drop packet from last link
                     link_latency = sender.path[next_hop].get_cur_latency(self.cur_time)
                     if USE_LATENCY_NOISE:
                         link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
@@ -108,7 +103,6 @@ class Engine():
                 if next_hop == sender.dest:
                     new_event_type = EVENT_TYPE_ACK
                 new_next_hop = next_hop + 1
-
                 link_latency = sender.path[next_hop].get_cur_latency(self.cur_time)
                 if USE_LATENCY_NOISE:
                     link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
@@ -168,7 +162,7 @@ class Engine():
             "Time" : event_time,
             "Cwnd" : sender.cwnd,
             # "Send_rate" : sender.rate,
-            "Used_cwnd" : sender.get_used_cwnd()
+            "Waiting_for_ack_nums" : sender.get_waiting_ack_nums()
         }
         log_data.update(packet.trans2dict())
 
