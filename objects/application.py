@@ -90,7 +90,7 @@ class Appication_Layer(object):
             # 1. the retransmisson time is bad, which may cause consistently loss packet
             # 2. the packet will be retransmission many times for a while
             retrans_packet = self.get_retrans_packet()
-            if retrans_packet:
+            if isinstance(retrans_packet, int):
                 self.now_block_offset = retrans_packet
             else:
                 self.now_block = self.select_block()
@@ -116,10 +116,10 @@ class Appication_Layer(object):
                           packet_size=self.bytes_per_packet,
                           payload=payload
                           )
-        if retrans_packet is None:
-            self.now_block_offset += 1
-        else:
+        if isinstance(retrans_packet, int):
             self.now_block_offset = self.now_block.split_nums
+        else:
+            self.now_block_offset += 1
 
         return packet
 
