@@ -255,4 +255,4 @@ if __name__ == '__main__':
     log_packet_file = "output/pcc_emulator_packet.log"
     trace_file = "config/trace.txt"
     analyze_pcc_emulator(log_packet_file)
-    plot_cwnd(log_packet_file, None, trace_file=trace_file)
+    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[0, 0.2])
