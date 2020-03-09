@@ -65,13 +65,15 @@ class Engine():
                 if next_hop == len(sender.path):
                     self.append_cc_input(event_time, sender, packet)
                     if dropped:
+                        # How do the drop packet transmission
                         sender.on_packet_lost()
                         # print("Packet lost at time %f" % self.cur_time)
                     else:
+                        # may acked packet which is not in window after packet loss
                         sender.on_packet_acked(cur_latency, packet)
                         # print("Packet acked at time %f" % self.cur_time)
                     # for reno
-                    while _packet in sender.slide_windows(self.cur_time):
+                    for _packet in sender.slide_windows(self.cur_time):
                         heapq.heappush(self.q, (self.cur_time, sender, _packet))
 
                 # ack back to source
@@ -83,6 +85,7 @@ class Engine():
                         link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
                     new_latency += link_latency
                     new_event_time += link_latency
+                    # update link last update time ?
                     push_new_event = True
             if event_type == EVENT_TYPE_SEND:
                 if next_hop == 0:
