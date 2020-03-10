@@ -85,7 +85,6 @@ class Engine():
                         link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
                     new_latency += link_latency
                     new_event_time += link_latency
-                    # update link last update time ?
                     push_new_event = True
             if event_type == EVENT_TYPE_SEND:
                 if next_hop == 0:

@@ -74,8 +74,8 @@ class Solution(object):
                     self.cwnd += 1
 
         if self.curr_state == self.states[2]:
-            self.ssthresh = self.cwnd // 2
-            self.cwnd = self.ssthresh + 3
+            self.ssthresh = max(self.cwnd // 2, 1)
+            self.cwnd = self.ssthresh
             self.curr_state = self.states[1]
         if self.drop_nums == 0:
             debug_print(self.drop_nums, self.ack_nums)

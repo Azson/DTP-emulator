@@ -1,6 +1,7 @@
 # Quickly Start
 
-For players, you need to finish the code in file "congestion_control_algorithm.py";
+For players, you need to finish the code both of  "congestion_control_algorithm.py" 
+and "block_selection.py" files in path of "/player".
 
 Then, just run the order "python3 main.py".
 

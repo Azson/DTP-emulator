@@ -1,5 +1,7 @@
 import random
 from config.constant import BYTES_PER_PACKET
+import numpy as np
+
 
 class Link():
 
@@ -10,9 +12,9 @@ class Link():
         '''
         self.trace_list = trace_list
         if len(trace_list) == 0:
-            self.bandwith = 20
+            self.bandwith = np.inf
             self.loss_rate = .0
-            self.delay = .0
+            self.delay = .001
         else:
             self.bandwith = trace_list[0][1] * 10**6 / BYTES_PER_PACKET
             self.loss_rate = trace_list[0][2]
