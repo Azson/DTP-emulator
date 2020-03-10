@@ -72,6 +72,7 @@ class Solution(object):
             elif self.curr_state == self.states[1]:
                 if self.ack_nums == self.cwnd:
                     self.cwnd += 1
+                    self.ack_nums = 0
 
         if self.curr_state == self.states[2]:
             self.ssthresh = max(self.cwnd // 2, 1)

@@ -282,5 +282,5 @@ if __name__ == '__main__':
 
     log_packet_file = "output/pcc_emulator_packet.log"
     trace_file = "config/trace.txt"
-    # analyze_pcc_emulator(log_packet_file, time_range=[0, 0.2], scatter=True)
-    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[7.5, 9.], scatter=False)
+    analyze_pcc_emulator(log_packet_file, time_range=[0, 0.2], scatter=True)
+    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[4.5, 5.5], scatter=False)
