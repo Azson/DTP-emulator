@@ -68,7 +68,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
         ax.plot(data_finish_time, data_lantency, label="Latency")
 
     ax.scatter([plt_data[idx]["Time"] for idx in data_drop],
-               [0 for idx in data_drop], label="Drop", s=200, c='r', marker='x')
+               [0 for idx in data_drop], label="Drop", s=300, c='r', marker='x')
 
     # plot average latency
     ax.plot([0, data_finish_time[-1] ], [np.mean(data_lantency)]*2, label="Average Latency",
@@ -265,16 +265,16 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
             st = trace_list[idx][0]
 
         if ed == -1 and trace_list[-1][0] < max_time:
-            ax.plot([st, max_time], [trace_list[-1][1]/BYTES_PER_PACKET ] * 2, '--',
+            ax.plot([st, max_time], [trace_list[-1][1]*10**6 /BYTES_PER_PACKET ] * 2, '--',
                     label="Different Bandwith", linewidth=5)
         elif ed != -1:
-            ax.plot([st, max_time], [trace_list[ed-1][1]/BYTES_PER_PACKET ] * 2, '--',
+            ax.plot([st, max_time], [trace_list[ed-1][1]*10**6 /BYTES_PER_PACKET ] * 2, '--',
                     label="Different Bandwith", linewidth=5)
 
         ax.set_ylabel("Link bandwith (Packet/s)", fontsize=font_size)
         plt.tick_params(labelsize=tick_size)
         plt.legend(fontsize=font_size)
-    print(data_time)
+
     plt.savefig("output/cwnd_changing.png")
 
 
