@@ -85,7 +85,6 @@ class Engine():
                         link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
                     new_latency += link_latency
                     new_event_time += link_latency
-                    # update link last update time ?
                     push_new_event = True
             if event_type == EVENT_TYPE_SEND:
                 if next_hop == 0:
@@ -93,6 +92,8 @@ class Engine():
                     if sender.can_send_packet():
                         sender.on_packet_sent()
                         push_new_event = True
+                    else:
+                        sender.wait_for_push_packets.append([event_time, sender, packet])
                     _packet = sender.new_packet(self.cur_time + (1.0 / sender.rate))
                     if _packet:
                         if sender.cwnd > 1 + len(self.q) + len(sender.wait_for_push_packets):

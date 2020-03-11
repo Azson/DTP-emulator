@@ -61,7 +61,7 @@ class PccEmulator(object):
         # bw = self.trace_list[0][1]
 
         queue = int(random.uniform(*self.queue_range))
-        self.links = [Link(self.trace_list, queue) , Link(self.trace_list, queue)]
+        self.links = [Link(self.trace_list, queue) , Link([], queue)]
         #self.senders = [Sender(0.3 * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         #self.senders = [Sender(random.uniform(0.2, 0.7) * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         self.senders = [W_sender(self.links, 0, self.features,
