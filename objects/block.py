@@ -2,6 +2,7 @@ from utils import get_ms_time
 
 
 class Block(object):
+    _block_id = 1
 
     def __init__(self,
                  priority=0,
@@ -11,23 +12,32 @@ class Block(object):
                  timestamp=None):
 
         self.priority = priority
-        self.block_id = block_id
+        self.block_id = block_id if block_id != -1 else Block.get_next_block_id()
         self.size = bytes_size
         self.deadline = deadline
-        self.timestamp = timestamp if not timestamp is None else get_ms_time()
+        self.timestamp = timestamp if not timestamp is None else get_ms_time(1)
         # emulator params
-        self.queue_ms = -1
-        self.propagation_ms = -1
-        self.transmition_ms = -1
+        self.send_delay = 0
+        self.queue_delay = 0
+        self.propagation_delay = 0
 
         # log params
         self.finish_timestamp = -1
         self.miss_ddl = 0
+        self.split_nums = -1
+        self.finished_bytes = 0
+
+
+    @classmethod
+    def get_next_block_id(cls):
+        ret = cls._block_id
+        cls._block_id += 1
+        return ret
 
 
     def get_cost_time(self):
 
-        return self.queue_ms + self.transmition_ms + self.propagation_ms
+        return self.send_delay + self.queue_delay + self.propagation_delay
 
 
     def __str__(self):
