@@ -111,7 +111,7 @@ def create_trace(change_scale=5, unchanged=4, cov=0.2, time_length=50):
             cnt = 0
         current_state = next_vals[0]
         current_variance = cov * bitrate_states_low_var[current_state]
-        time += 0.5
+        time += 1
     return bitrates
 
 def create_network(row, length):
@@ -120,15 +120,15 @@ def create_network(row, length):
         cs = random.randint(3, 10)
         uc = random.randint(3, 6)
         cv = random.uniform(0, 1)
-        pars = list(map(str, [cs, uc, cv, row]))
+        # pars = list(map(str, [cs, uc, cv, row]))
         bw = create_trace(change_scale=cs, unchanged=uc, cov=cv, time_length=row)
         for i in range(row):
-            trace_list.append([i * 10, bw.pop(), 0, 0.001])
+            trace_list.append([i , bw.pop(), 0, 0.001])
         with open("first_group/traces_"+str(idx + 1)+".txt", "w+") as f:
-            f.write("parameters: ")
-            for i in range(3):
-                f.write(pars[i] + ",")
-            f.write(pars[3] + '\n')
+            # f.write("parameters: ")
+            # for i in range(3):
+            #     f.write(pars[i] + ",")
+            # f.write(pars[3] + '\n')
             for i in range(len(trace_list)):
                 for j in range(3):
                     f.write(str(trace_list[i][j]) + ',')
@@ -136,4 +136,4 @@ def create_network(row, length):
 
 
 if __name__ == "__main__":
-    create_network(13, 40)
+    create_network(10, 40)
