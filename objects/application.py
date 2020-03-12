@@ -2,6 +2,7 @@ from objects.block import Block
 from objects.packet import Packet
 import numpy as np
 from player import block_selection
+import pandas as pd
 
 
 class Appication_Layer(object):
@@ -24,14 +25,41 @@ class Appication_Layer(object):
         self.now_block_offset = 0
         self.head_per_packet = 20
 
-        self.create_block_by_file(create_det)
+        self.create_det = create_det
+        self.handle_block(block_file)
         self.ack_blocks = dict()
         self.blocks_status = dict()
         self.block_selection = block_selection.Solution()
 
 
-    def create_block_by_file(self, det=0.1):
-        with open(self.block_file, "r") as f:
+    def handle_block(self, block_file):
+        if isinstance(block_file, str):
+            block_file = [block_file]
+        for single_file in block_file:
+            if single_file[-4:] == ".csv":
+                self.create_blok_by_csv(single_file)
+            else:
+                self.create_block_by_file(single_file, self.create_det)
+
+
+    def create_blok_by_csv(self, csv_file):
+        df_data = pd.read_csv(csv_file, header=None)
+        shape = df_data.shape
+        assert len(shape) >= 2
+        if shape[1] == 2:
+            df_data.columns = ["time", "size"]
+        elif shape[1]== 3:
+            df_data.columns = ["time", "size", "key_frame"]
+
+        for idx in range(shape[0]):
+            block = Block(bytes_size=df_data["size"][idx],
+                          deadline=0.2,
+                          timestamp=df_data["time"][idx])
+            self.block_queue.append(block)
+
+
+    def create_block_by_file(self, block_file, det=0.1):
+        with open(block_file, "r") as f:
             self.block_nums = int(f.readline())
 
             pattern_cols = ["type", "size", "ddl"]
@@ -89,18 +117,18 @@ class Appication_Layer(object):
         if self.now_block is None or self.now_block_offset == self.now_block.split_nums:
             # 1. the retransmisson time is bad, which may cause consistently loss packet
             # 2. the packet will be retransmission many times for a while
-            retrans_packet = self.get_retrans_packet()
-            if isinstance(retrans_packet, int):
-                self.now_block_offset = retrans_packet
-            else:
-                self.now_block = self.select_block()
-                if self.now_block is None:
-                    return None
+            # retrans_packet = self.get_retrans_packet()
+            # if isinstance(retrans_packet, int):
+            #     self.now_block_offset = retrans_packet
+            # else:
+            self.now_block = self.select_block()
+            if self.now_block is None:
+                return None
 
-                self.now_block_offset = 0
-                self.now_block.split_nums = int(np.ceil(self.now_block.size /
-                                                (self.bytes_per_packet - self.head_per_packet)))
-                self.blocks_status[self.now_block.block_id] = self.now_block
+            self.now_block_offset = 0
+            self.now_block.split_nums = int(np.ceil(self.now_block.size /
+                                            (self.bytes_per_packet - self.head_per_packet)))
+            self.blocks_status[self.now_block.block_id] = self.now_block
 
         if self.now_block is None:
             return None
@@ -109,7 +137,7 @@ class Appication_Layer(object):
                 self.now_block_offset == self.now_block.split_nums - 1:
             payload = self.now_block.size % (self.bytes_per_packet - self.head_per_packet)
 
-        packet = Packet(create_time=cur_time,
+        packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
                           next_hop=0,
                           block_id=self.now_block.block_id,
                           offset=self.now_block_offset,

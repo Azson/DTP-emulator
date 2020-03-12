@@ -1,5 +1,4 @@
 from config.constant import *
-import numpy as np
 from utils import debug_print
 
 
@@ -9,8 +8,8 @@ class Solution(object):
         self._input_list = []
         self.call_nums = 0
         self.cwnd = 1
-        self.send_rate = np.inf
-        self.ssthresh = np.inf
+        self.send_rate = float("inf")
+        self.ssthresh = float("inf")
         self.curr_state = "slow_start"
         self.states = ["slow_start", "congestion_avoidance", "fast_recovery"]
         self.drop_nums = 0
@@ -79,6 +78,7 @@ class Solution(object):
             self.cwnd = self.ssthresh
             self.curr_state = self.states[1]
         if self.drop_nums == 0:
+            debug_print("Drop nums, Ack_nums")
             debug_print(self.drop_nums, self.ack_nums)
 
 

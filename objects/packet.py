@@ -70,6 +70,16 @@ class Packet(object):
         return print_data
 
 
+    def create_retrans_packet(self, cur_time):
+
+        return Packet(create_time=cur_time,
+                      next_hop=0,
+                      block_id=self.block_id,
+                      offset=self.offset,
+                      packet_size=self.packet_size,
+                      payload=self.payload)
+
+
     def __lt__(self, other):
         return self.create_time < other.create_time
 

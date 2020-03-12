@@ -78,7 +78,7 @@ def test_cwnd_internal(log_file, rows=None, time_range=None):
 
 
 if __name__ == '__main__':
-    log_packet_file = "../output/pcc_emulator_packet.log"
+    log_packet_file = "../output/packet_log/packet-0.log"
 
     test_cwnd_internal(log_packet_file)
 
