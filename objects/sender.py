@@ -43,7 +43,7 @@ class Sender():
 
 
     def init_application(self, block_file):
-        self.application = Appication_Layer(block_file, BYTES_PER_PACKET)
+        self.application = Appication_Layer(block_file, bytes_per_packet=BYTES_PER_PACKET)
 
 
     def new_packet(self, cur_time):
@@ -99,9 +99,12 @@ class Sender():
         self.application.update_block_status(packet)
 
 
-    def on_packet_lost(self):
+    def on_packet_lost(self, event_time, packet):
         self.lost += 1
         self.bytes_in_flight -= BYTES_PER_PACKET
+        # do retrans if lost
+        retrans_packet = packet.create_retrans_packet(event_time)
+        self.wait_for_push_packets.append([event_time, self, retrans_packet])
 
 
     def set_rate(self, new_rate):

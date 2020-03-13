@@ -2,13 +2,13 @@
     "Events": [
         {
             "Name": "Step",
-            "Send Rate": 10082984.392843544,
-            "Throughput": 9457175.485344497,
-            "Latency": 0.005873068254990168,
-            "Loss Rate": 0.06191482935668982,
-            "Latency Inflation": -0.00021947933985521793,
+            "Send Rate": 1042907.3001687074,
+            "Throughput": 1007341.2065113275,
+            "Latency": 0.0020263666258607317,
+            "Loss Rate": 0.0338405036726128,
+            "Latency Inflation": -1.9092945143173568e-07,
             "Latency Ratio": 1.0,
-            "Send Ratio": 1.0661729190146514,
+            "Send Ratio": 1.035306898424769,
             "reward": null
         }
     ]

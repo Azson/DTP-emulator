@@ -1,6 +1,6 @@
 import heapq, random
 from config.constant import *
-from utils import get_packet_type
+from utils import get_packet_type, get_emulator_info
 
 
 class Engine():
@@ -13,7 +13,9 @@ class Engine():
         self.queue_initial_packets()
 
         self.fir_log = True
-        self.log_packet_file = "output/pcc_emulator_packet.log"
+        self.log_packet_file = "output/packet_log/packet-0.log"
+        self.log_items = 0
+        self.last_alert_time = 0
 
 
     def queue_initial_packets(self):
@@ -44,7 +46,7 @@ class Engine():
 
         while self.cur_time < end_time:
             if len(self.q) == 0:
-                print("There is no packet from application~")
+                self.close()
                 return
 
             event_time, sender, packet = heapq.heappop(self.q)
@@ -66,7 +68,7 @@ class Engine():
                     self.append_cc_input(event_time, sender, packet)
                     if dropped:
                         # How do the drop packet transmission
-                        sender.on_packet_lost()
+                        sender.on_packet_lost(event_time, packet)
                         # print("Packet lost at time %f" % self.cur_time)
                     else:
                         # may acked packet which is not in window after packet loss
@@ -74,7 +76,8 @@ class Engine():
                         # print("Packet acked at time %f" % self.cur_time)
                     # for reno
                     for _packet in sender.slide_windows(self.cur_time):
-                        heapq.heappush(self.q, (self.cur_time, sender, _packet))
+                        heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
+                                                sender, _packet))
 
                 # ack back to source
                 else:
@@ -97,7 +100,8 @@ class Engine():
                     _packet = sender.new_packet(self.cur_time + (1.0 / sender.rate))
                     if _packet:
                         if sender.cwnd > 1 + len(self.q) + len(sender.wait_for_push_packets):
-                            heapq.heappush(self.q, (self.cur_time + (1.0 / sender.rate), sender, _packet))
+                            heapq.heappush(self.q, (max(self.cur_time + (1.0 / sender.rate), _packet.create_time), \
+                                                    sender, _packet))
                         else:
                             sender.wait_for_push_packets.append([event_time, sender, _packet])
 
@@ -157,9 +161,23 @@ class Engine():
         :return: Packet
         '''
 
+        def get_true_log_file():
+            if MAX_PACKET_LOG_ROWS:
+                file_nums = self.log_items // MAX_PACKET_LOG_ROWS
+                if self.log_items and self.log_items % MAX_PACKET_LOG_ROWS == 0:
+                    self.fir_log = True
+                return self.log_packet_file.replace('0', str(file_nums))
+            return self.log_packet_file
+
+        if ENABLE_DEBUG and event_time - self.last_alert_time >= ALERT_CIRCLE:
+            self.last_alert_time = event_time
+            sender_mi = self.senders[0].get_run_data()
+            print("Time : {}".format(event_time))
+            print(get_emulator_info(sender_mi))
+
         if self.fir_log:
             self.fir_log = False
-            with open(self.log_packet_file, "w") as f:
+            with open(get_true_log_file(), "w") as f:
                 pass
 
         log_data = {
@@ -170,9 +188,9 @@ class Engine():
         }
         log_data.update(packet.trans2dict())
 
-        with open(self.log_packet_file, "a") as f:
+        with open(get_true_log_file(), "a") as f:
             f.write(str(log_data)+"\n")
-
+        self.log_items += 1
         return packet
 
 
@@ -181,8 +199,6 @@ class Engine():
         if event_type == "packet":
             data = {
                 "event_time" : event_time,
-                "link_rate" : -1 if packet.next_hop == 0 else sender.path[packet.next_hop-1].bandwith,
-                "send_rate" : sender.rate,
                 "packet_type" : get_packet_type(sender, packet),
                 "packet" : packet.trans2dict()
             }
@@ -196,3 +212,10 @@ class Engine():
         if feed_back:
             sender.cwnd = feed_back["cwnd"]
             sender.rate = feed_back["send_rate"]
+
+
+    def close(self):
+        print("Time {}s : There is no packet from application~".format(self.cur_time))
+        for sender in self.senders:
+            print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
+            sender.application.close()

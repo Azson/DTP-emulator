@@ -68,7 +68,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
         ax.plot(data_finish_time, data_lantency, label="Latency")
 
     ax.scatter([plt_data[idx]["Time"] for idx in data_drop],
-               [0 for idx in data_drop], label="Drop", s=300, c='r', marker='x')
+               [min(data_lantency) / 2]*len(data_drop), label="Drop", s=300, c='r', marker='x')
 
     # plot average latency
     ax.plot([0, data_finish_time[-1] ], [np.mean(data_lantency)]*2, label="Average Latency",
@@ -107,25 +107,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
 
     # plot bandwith
     if trace_file:
-        max_time = data_finish_time[-1]
-        trace_list = []
-        with open(trace_file, "r") as f:
-            for line in f.readlines():
-                trace_list.append(list(
-                    map(lambda x: float(x), line.split(","))
-                ))
-
-        st = 0
-        for idx in range(len(trace_list)):
-            if trace_list[idx][0] > max_time:
-                break
-            plt.plot([st, trace_list[idx][0]], [len(plt_data) + 1] * 2, '--',
-                     linewidth=5)
-            st = trace_list[idx][0]
-
-        if trace_list[-1][0] < max_time:
-            plt.plot([st, max_time], [len(plt_data) + 1] * 2, '--',
-                 label="Different Bandwith", linewidth=5)
+        plot_trace(data_finish_time, ax, font_size, tick_size, trace_file)
 
     plt.tight_layout()
 
@@ -230,6 +212,7 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
     else:
         ax.plot(data_time, data_cwnd, label="cwnd", c='g')
     ax.set_ylabel("Packet", fontsize=font_size)
+    ax.set_xlabel("Time / s", fontsize=font_size)
     plt.tick_params(labelsize=tick_size)
     plt.legend(fontsize=font_size)
 
@@ -243,44 +226,49 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
 
     # plot bandwith
     if trace_file:
-        max_time = data_time[-1]
-        trace_list = []
-        with open(trace_file, "r") as f:
-            for line in f.readlines():
-                trace_list.append(list(
-                    map(lambda x: float(x), line.split(","))
-                ))
-
-        st = data_time[0]
-        ax = ax.twinx()
-        ed = -1
-        for idx in range(1, len(trace_list)):
-            if trace_list[idx][0] < st:
-                continue
-            if trace_list[idx][0] > max_time:
-                ed = idx
-                break
-            ax.plot([st, trace_list[idx][0]], [trace_list[idx-1][1]/BYTES_PER_PACKET ] * 2, '--',
-                     linewidth=5)
-            st = trace_list[idx][0]
-
-        if ed == -1 and trace_list[-1][0] < max_time:
-            ax.plot([st, max_time], [trace_list[-1][1]*10**6 /BYTES_PER_PACKET ] * 2, '--',
-                    label="Different Bandwith", linewidth=5)
-        elif ed != -1:
-            ax.plot([st, max_time], [trace_list[ed-1][1]*10**6 /BYTES_PER_PACKET ] * 2, '--',
-                    label="Different Bandwith", linewidth=5)
-
-        ax.set_ylabel("Link bandwith (Packet/s)", fontsize=font_size)
-        plt.tick_params(labelsize=tick_size)
-        plt.legend(fontsize=font_size)
+        plot_trace(data_time, ax, font_size, tick_size, trace_file)
 
     plt.savefig("output/cwnd_changing.png")
 
 
+def plot_trace(data_time, ax, font_size, tick_size, trace_file):
+    max_time = data_time[-1]
+    trace_list = []
+    with open(trace_file, "r") as f:
+        for line in f.readlines():
+            trace_list.append(list(
+                map(lambda x: float(x), line.split(","))
+            ))
+
+    st = data_time[0]
+    ax = ax.twinx()
+    ed = -1
+    for idx in range(1, len(trace_list)):
+        if trace_list[idx][0] < st:
+            continue
+        if trace_list[idx][0] > max_time:
+            ed = idx
+            break
+        ax.plot([st, trace_list[idx][0]], [trace_list[idx - 1][1] * 10 ** 6 / BYTES_PER_PACKET] * 2, '--',
+                linewidth=5)
+        st = trace_list[idx][0]
+
+    if ed == -1 and trace_list[-1][0] < max_time:
+        ax.plot([st, max_time], [trace_list[-1][1] * 10 ** 6 / BYTES_PER_PACKET] * 2, '--',
+                label="Different Bandwith", linewidth=5)
+    elif ed != -1:
+        ax.plot([st, max_time], [trace_list[ed - 1][1] * 10 ** 6 / BYTES_PER_PACKET] * 2, '--',
+                label="Different Bandwith", linewidth=5)
+
+    ax.set_ylabel("Link bandwith (Packet/s)", fontsize=font_size)
+    plt.tick_params(labelsize=tick_size)
+    plt.legend(fontsize=font_size)
+
+
+
 if __name__ == '__main__':
 
-    log_packet_file = "output/pcc_emulator_packet.log"
-    trace_file = "config/trace.txt"
+    log_packet_file = "output/packet_log/packet-0.log"
+    trace_file = "scripts/first_group/traces_1.txt"
     analyze_pcc_emulator(log_packet_file, time_range=[0, 0.2], scatter=True)
-    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[4.5, 5.5], scatter=False)
+    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[0, 1], scatter=False)
