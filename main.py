@@ -40,4 +40,4 @@ if __name__ == '__main__':
     print(emulator.senders[0].rtt_samples)
     print(emulator.senders[0].application.ack_blocks)
     analyze_pcc_emulator(log_packet_file)
-    plot_cwnd(log_packet_file, trace_file=trace_file)
+    plot_cwnd(log_packet_file, trace_file=new_trace_file)

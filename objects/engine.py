@@ -46,7 +46,7 @@ class Engine():
 
         while self.cur_time < end_time:
             if len(self.q) == 0:
-                print("Time {}s : There is no packet from application~".format(self.cur_time))
+                self.close()
                 return
 
             event_time, sender, packet = heapq.heappop(self.q)
@@ -164,7 +164,7 @@ class Engine():
         def get_true_log_file():
             if MAX_PACKET_LOG_ROWS:
                 file_nums = self.log_items // MAX_PACKET_LOG_ROWS
-                if self.log_items % MAX_PACKET_LOG_ROWS == 0:
+                if self.log_items and self.log_items % MAX_PACKET_LOG_ROWS == 0:
                     self.fir_log = True
                 return self.log_packet_file.replace('0', str(file_nums))
             return self.log_packet_file
@@ -212,3 +212,10 @@ class Engine():
         if feed_back:
             sender.cwnd = feed_back["cwnd"]
             sender.rate = feed_back["send_rate"]
+
+
+    def close(self):
+        print("Time {}s : There is no packet from application~".format(self.cur_time))
+        for sender in self.senders:
+            print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
+            sender.application.close()

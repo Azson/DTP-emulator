@@ -73,5 +73,5 @@ def filter_log():
 if __name__ == '__main__':
     new_block_files = ["../config/data_video.csv", "../config/data_audio.csv"]
 
-    # pred_packet_nums()
-    filter_log()
+    pred_packet_nums()
+    # filter_log()

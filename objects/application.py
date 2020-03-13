@@ -113,14 +113,9 @@ class Appication_Layer(object):
 
     def get_next_packet(self, cur_time):
         self.pass_time = cur_time
-        retrans_packet = None
         if self.now_block is None or self.now_block_offset == self.now_block.split_nums:
             # 1. the retransmisson time is bad, which may cause consistently loss packet
             # 2. the packet will be retransmission many times for a while
-            # retrans_packet = self.get_retrans_packet()
-            # if isinstance(retrans_packet, int):
-            #     self.now_block_offset = retrans_packet
-            # else:
             self.now_block = self.select_block()
             if self.now_block is None:
                 return None
@@ -130,8 +125,6 @@ class Appication_Layer(object):
                                             (self.bytes_per_packet - self.head_per_packet)))
             self.blocks_status[self.now_block.block_id] = self.now_block
 
-        if self.now_block is None:
-            return None
         payload = self.bytes_per_packet - self.head_per_packet
         if self.now_block.size % (self.bytes_per_packet - self.head_per_packet) and \
                 self.now_block_offset == self.now_block.split_nums - 1:
@@ -144,10 +137,7 @@ class Appication_Layer(object):
                           packet_size=self.bytes_per_packet,
                           payload=payload
                           )
-        if isinstance(retrans_packet, int):
-            self.now_block_offset = self.now_block.split_nums
-        else:
-            self.now_block_offset += 1
+        self.now_block_offset += 1
 
         return packet
 
@@ -170,9 +160,9 @@ class Appication_Layer(object):
         # retransmission packet may be sended many times
         else:
             self.ack_blocks[packet.block_id].append(packet.offset)
-            # Assuming every block can be split into more than 1 packet.
-            if self.is_sended_block(packet.block_id):
-                self.log_block(self.blocks_status[packet.block_id])
+
+        if self.is_sended_block(packet.block_id):
+            self.log_block(self.blocks_status[packet.block_id])
 
 
     def log_block(self, block):
@@ -194,6 +184,16 @@ class Appication_Layer(object):
         if len(self.ack_blocks[block_id]) == self.blocks_status[block_id].split_nums:
             return True
         return False
+
+
+    def close(self):
+        for block_id, packet_list in self.ack_blocks.items():
+            if self.is_sended_block(block_id):
+                continue
+            print("block {} not finished!".format(block_id))
+            self.log_block(self.blocks_status[block_id])
+        print(len(self.ack_blocks))
+        return None
 
 
     def analyze_application(self):
