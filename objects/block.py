@@ -18,8 +18,7 @@ class Block(object):
         self.timestamp = timestamp if not timestamp is None else get_ms_time(1)
         # emulator params
         self.send_delay = 0
-        self.queue_delay = 0
-        self.propagation_delay = 0
+        self.latency = 0
 
         # log params
         self.finish_timestamp = -1
@@ -37,7 +36,7 @@ class Block(object):
 
     def get_cost_time(self):
 
-        return self.send_delay + self.queue_delay + self.propagation_delay
+        return self.send_delay + self.latency
 
 
     def __str__(self):

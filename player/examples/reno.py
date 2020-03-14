@@ -1,14 +1,12 @@
 from config.constant import *
 from utils import debug_print
+from objects.cc_base import CongestionControl
 
 
-class Reno(object):
+class Reno(CongestionControl):
 
     def __init__(self):
-        self._input_list = []
-        self.call_nums = 0
-        self.cwnd = 1
-        self.send_rate = float("inf")
+        super(Reno, self).__init__()
         self.ssthresh = float("inf")
         self.curr_state = "slow_start"
         self.states = ["slow_start", "congestion_avoidance", "fast_recovery"]
@@ -19,20 +17,7 @@ class Reno(object):
         self.last_cwnd = 0
         self.instant_drop_nums = 0
 
-
-    def make_decision(self):
-        self.call_nums += 1
-
-        output = {
-            "cwnd" : self.cwnd,
-            "send_rate" : self.send_rate
-        }
-
-        return output
-
-
     def cc_trigger(self, data):
-
         packet_type = data["packet_type"]
         event_time = data["event_time"]
 
@@ -81,7 +66,6 @@ class Reno(object):
             debug_print("Drop nums, Ack_nums")
             debug_print(self.drop_nums, self.ack_nums)
 
-
     def append_input(self, data):
         self._input_list.append(data)
 
@@ -91,5 +75,5 @@ class Reno(object):
                 "cwnd" : self.cwnd,
                 "send_rate" : self.send_rate
             }
-
         return None
+

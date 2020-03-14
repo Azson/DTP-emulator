@@ -3,6 +3,7 @@ from objects.packet import Packet
 import numpy as np
 from player import block_selection
 import pandas as pd
+from utils import debug_print
 
 
 class Appication_Layer(object):
@@ -151,8 +152,7 @@ class Appication_Layer(object):
         # update block information.
         # Which is better? Save packet individual value or sum value
         self.blocks_status[packet.block_id].send_delay += packet.send_delay
-        self.blocks_status[packet.block_id].queue_delay += packet.queue_delay
-        self.blocks_status[packet.block_id].propagation_delay += packet.propagation_delay
+        self.blocks_status[packet.block_id].latency += packet.latency
         self.blocks_status[packet.block_id].finished_bytes += packet.payload
 
         if packet.block_id not in self.ack_blocks:
@@ -190,9 +190,8 @@ class Appication_Layer(object):
         for block_id, packet_list in self.ack_blocks.items():
             if self.is_sended_block(block_id):
                 continue
-            print("block {} not finished!".format(block_id))
+            debug_print("block {} not finished!".format(block_id))
             self.log_block(self.blocks_status[block_id])
-        print(len(self.ack_blocks))
         return None
 
 
