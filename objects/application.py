@@ -172,7 +172,10 @@ class Appication_Layer(object):
             with open("output/block.log", "w") as f:
                 pass
 
-        block.finish_timestamp = self.init_time + self.pass_time
+        if self.is_sended_block(block.block_id):
+            block.finish_timestamp = block.timestamp+block.get_cost_time()
+        else:
+            block.finish_timestamp = self.init_time + self.pass_time
         if block.get_cost_time() > block.deadline:
             block.miss_ddl = 1
 
