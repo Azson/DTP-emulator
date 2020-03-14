@@ -22,7 +22,7 @@ In this module, you have to implement the function "select_block" with the param
 
 #### select_block
 
-For every block in block queue, it's implement in "objects/block.py". But we recommend you to get more information at  [Block](#block log) .
+For every block in block queue, it's implement in "objects/block.py". But we recommend you to get more information at  [Block](#block-log) .
 
 ### congestion_control_algorithm.py
 
@@ -59,7 +59,7 @@ For item information in "_input_list",  it is a triad of **(event_time, packet_t
 
 - packet
 
-  > The packet it the object implemented in "objects/packet.py". But we recommend you to get more information at [Packet](#packet log) .
+  > The packet it the object implemented in "objects/packet.py". But we recommend you to get more information at [Packet](#packet-log) .
 
 Why we design a individual function to add element to "_input_list"?
 
@@ -119,20 +119,21 @@ For every row,  it's form like below：
 
 ```json
 {
-    'Time': 0.001,
-    'Cwnd': 1, 
-    'Waiting_for_ack_nums': 1, 
-    'Type': 'A', 'Position': 1, 
-    'Send_delay': 0.0, 
-    'Lantency': 0.001, 
-    'Drop': 0, 
-    'Packet_id': 1, 
-    'Block_id': 1, 
-    'Create_time': 0.0, 
-    'Deadline': 0.2, 
-    'Offset': 0, 
-    'Payload': 1480, 
-    'Packet_size': 1500
+    "Time": 0.001,
+    "Cwnd": 1, 
+    "Waiting_for_ack_nums": 1, 
+    "Type": "A", 
+    "Position": 1, 
+    "Send_delay": 0.0, 
+    "Lantency": 0.001, 
+    "Drop": 0, 
+    "Packet_id": 1, 
+    "Block_id": 1, 
+    "Create_time": 0.0, 
+    "Deadline": 0.2, 
+    "Offset": 0, 
+    "Payload": 1480, 
+    "Packet_size": 1500
 }
 ```
 
@@ -140,9 +141,9 @@ Here is every key's explanation：
 
 - Time : The time handle this event;
 - Cwnd : The size of crowded window at sender.Its unit is packet; 
-- Waiting_for_ack_nums : 
+- Waiting_for_ack_nums : The numbers of packets that sended but not acknowledged by source.
 - Type : To distinguish sending or acknowledge packet;
-- Send_delay : The time that packet sent into cwnd;
+- Send_delay : The time that packet sent into window;
 - Lantency : The time that packet spending on links including queue delay and propagation delay;
 - Drop : Label whether the packet is dropped;
 - Packet_id : The Identity of packet;
@@ -161,17 +162,17 @@ For every row, it's form like below：
 
 ``` json
 {
-    'priority': 0, 
-    'block_id': 1, 
-    'size': 9584, 
-    'deadline': 0.2, 
-    'timestamp': 0.0, 
-    'send_delay': 0.0, 
-    'latency': 0.014309502968274143, 
-    'finish_timestamp': 0.014309502968274143, 
-    'miss_ddl': 0, 
-    'split_nums': 7, 
-    'finished_bytes': 9584
+    "priority": 0, 
+    "block_id": 1, 
+    "size": 9584, 
+    "deadline": 0.2, 
+    "timestamp": 0.0, 
+    "send_delay": 0.0, 
+    "latency": 0.014309502968274143, 
+    "finish_timestamp": 0.014309502968274143, 
+    "miss_ddl": 0, 
+    "split_nums": 7, 
+    "finished_bytes": 9584
 }
 ```
 
@@ -180,11 +181,11 @@ Here is every key's explanation：
 - priority : The degree of emergency of block;
 - block_id : The identity of block;
 - size : The size of block whose unit is bytes;
-- deadline : The block 's failure time size;
+- deadline : The block's failure time size;
 - timestamp : The time when block is created;
 - send_delay : The sum of all packets's "send_delay" which belong to the block;
 - latency : The sum of all packets's "latency" which belong to the block;
-- finish_timestamp :  The time when block is finished if it don't miss deadine;Otherwise, it's the time when the block was detected failure;
+- finish_timestamp :  The time when block is finished if it don't miss deadine; Otherwise, it's the time when the block was detected failure;
 - miss_ddl : Whether the block is miss deadline;
 - split_nums : The count of packets that the block is divided;
 - finished_bytes : The number of bytes received by the receiver.
