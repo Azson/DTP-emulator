@@ -1,6 +1,6 @@
 import heapq, random
 from config.constant import *
-from utils import get_packet_type, get_emulator_info
+from utils import get_packet_type, get_emulator_info, debug_print
 
 
 class Engine():
@@ -52,7 +52,7 @@ class Engine():
             event_time, sender, packet = heapq.heappop(self.q)
             self.log_packet(event_time, sender, packet)
 
-            event_type, next_hop, cur_latency, dropped, life, packet_id = packet.parse()
+            event_type, next_hop, cur_latency, dropped, packet_id = packet.parse()
             # print("Got event %s, to link %d, latency %f at time %f" % (event_type, next_hop, cur_latency, event_time))
             self.cur_time = event_time
             new_event_time = event_time
@@ -117,12 +117,11 @@ class Engine():
                 new_latency += link_latency
                 new_event_time += link_latency
                 new_dropped = not sender.path[next_hop].packet_enters_link(self.cur_time)
-                life += link_latency + sender.path[next_hop].extra_delay
 
             if push_new_event:
                 packet.next_hop = new_next_hop
                 packet.packet_type = new_event_type
-                packet.queue_delay = new_latency
+                packet.latency = new_latency
                 packet.drop = new_dropped
                 heapq.heappush(self.q, (new_event_time, sender, packet))
 
@@ -217,5 +216,5 @@ class Engine():
     def close(self):
         print("Time {}s : There is no packet from application~".format(self.cur_time))
         for sender in self.senders:
-            print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
+            debug_print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
             sender.application.close()

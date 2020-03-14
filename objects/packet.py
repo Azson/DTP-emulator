@@ -13,7 +13,7 @@ class Packet(object):
                  packet_type="S",
                  drop = False,
                  send_delay=.0,
-                 queue_delay=.0
+                 latency=.0
                  ):
         self.packet_type = packet_type
         self.create_time = create_time
@@ -27,8 +27,7 @@ class Packet(object):
         self.drop = drop
 
         self.send_delay = send_delay
-        self.queue_delay = queue_delay
-        self.propagation_delay = 0.0002
+        self.latency = latency
 
         if packet_id is None:
             self.packet_id = Packet._get_next_packet()
@@ -45,9 +44,8 @@ class Packet(object):
 
         return [self.packet_type,
                 self.next_hop,
-                self.queue_delay,
+                self.latency,
                 self.drop,
-                self.queue_delay,
                 self.packet_id]
 
 
@@ -56,8 +54,7 @@ class Packet(object):
             "Type": self.packet_type,
             "Position": self.next_hop,
             "Send_delay": self.send_delay,
-            "Queue_delay": self.queue_delay,
-            "Propagation_delay": self.propagation_delay,
+            "Lantency": self.latency,
             "Drop": 1 if self.drop else 0,
             "Packet_id": self.packet_id,
             "Block_id": self.block_id,

@@ -49,9 +49,9 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
             if item["Drop"] == 1:
                 data_drop.append(idx)
             else:
-                data_lantency.append(item["Queue_delay"])
+                data_lantency.append(item["Lantency"])
                 data_finish_time.append(item["Time"])
-                data_sum_time.append(item["Send_delay"] + item["Queue_delay"] + item["Propagation_delay"])
+                data_sum_time.append(item["Send_delay"] + item["Lantency"])
 
             if item["Deadline"] < data_sum_time[-1]:
                 data_miss_ddl.append(idx)
@@ -270,5 +270,5 @@ if __name__ == '__main__':
 
     log_packet_file = "output/packet_log/packet-0.log"
     trace_file = "scripts/first_group/traces_1.txt"
-    analyze_pcc_emulator(log_packet_file, time_range=[0, 0.2], scatter=True)
-    plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[0, 1], scatter=False)
+    analyze_pcc_emulator(log_packet_file, time_range=None, scatter=False, trace_file=trace_file)
+    # plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[0, 1], scatter=False)
