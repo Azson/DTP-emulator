@@ -60,7 +60,7 @@ class BBR(Reno):
     def stop_increasing(self, bws):
         scale1 = (bws[1] - bws[0]) / bws[0]
         scale2 = (bws[2] - bws[1]) / bws[1]
-        scale3 = (bws[3] - bws[2]) / bws[3]
+        scale3 = (bws[3] - bws[2]) / bws[2]
         return len(bws) == 4 and bws[0] and bws[1] and bws[2] \
                and scale1 < 0.25 and scale2 < 0.25 and scale3 < 0.25
 
@@ -141,6 +141,16 @@ class BBR(Reno):
             if self.change_probe_rtt():
                 self.mode = self.bbr_mode[3]
 
+        elif self.mode == self.bbr_mode[2]:
+            if self.change_probe_rtt():
+                self.mode = self.bbr_mode[3]
+        elif self.mode == self.bbr_mode[3]:
+            self.cwnd = self.bbr_min_cwnd
+            # after lasting 200ms,
+            # if self.stop_increasing(self.three_bws):
+            #     self.mode = self.bbr_mode[2]
+            # else:
+            #     self.mode = self.bbr_mode[0]
 
 
         elif packet_type == EVENT_TYPE_SEND:
