@@ -93,25 +93,27 @@ class Engine():
                 if next_hop == 0:
                     # print("Packet sent at time %f" % self.cur_time)
                     if sender.can_send_packet():
-                        sender.on_packet_sent()
+                        pacing_time = sender.on_packet_sent(new_event_time)
+                        packet.pacing_delay += pacing_time
                         push_new_event = True
                     else:
                         sender.wait_for_push_packets.append([event_time, sender, packet])
-                    _packet = sender.new_packet(self.cur_time + (1.0 / sender.rate))
+                    # when do the packet create ? before or after pacing ?
+                    _packet = sender.new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
                         if sender.cwnd > 1 + len(self.q) + len(sender.wait_for_push_packets):
-                            heapq.heappush(self.q, (max(self.cur_time + (1.0 / sender.rate), _packet.create_time), \
+                            heapq.heappush(self.q, (max(new_event_time + (1.0 / sender.rate), _packet.create_time), \
                                                     sender, _packet))
                         else:
                             sender.wait_for_push_packets.append([event_time, sender, _packet])
-
+                    new_event_time += pacing_time
                 else:
                     push_new_event = True
 
                 if next_hop == sender.dest:
                     new_event_type = EVENT_TYPE_ACK
                 new_next_hop = next_hop + 1
-                link_latency = sender.path[next_hop].get_cur_latency(self.cur_time)
+                link_latency = sender.path[next_hop].get_cur_latency(new_event_time)
                 if USE_LATENCY_NOISE:
                     link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
                 new_latency += link_latency
@@ -209,8 +211,9 @@ class Engine():
 
         feed_back = sender.solution.append_input(data)
         if feed_back:
-            sender.cwnd = feed_back["cwnd"]
-            sender.rate = feed_back["send_rate"]
+            sender.cwnd = feed_back["cwnd"] if "cwnd" in feed_back else sender.cwnd
+            sender.rate = feed_back["send_rate"] if "send_rate" in feed_back else sender.rate
+            sender.pacing_rate = feed_back["pacing_rate"] if "pacing_rate" in feed_back else sender.pacing_rate
 
 
     def close(self):

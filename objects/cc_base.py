@@ -4,6 +4,7 @@ class CongestionControl(object):
         self._input_list = []
         self.cwnd = 1
         self.send_rate = float("inf")
+        self.pacing_rate = float("inf")
         self.call_nums = 0
 
     def make_decision(self):
