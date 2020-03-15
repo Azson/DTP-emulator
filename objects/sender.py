@@ -28,6 +28,8 @@ class Sender():
         self.rate = ret["send_rate"]
         self.cwnd = ret["cwnd"]
         self.starting_rate = self.rate
+        self.pacing_rate = ret["pacing_rate"] if "pacing_rate" in ret else float("inf")
+        self.cur_time = 0
 
         self.application = None
         self.wait_for_push_packets = []
@@ -85,9 +87,14 @@ class Sender():
         self.net = net
 
 
-    def on_packet_sent(self):
+    def on_packet_sent(self, cur_time):
         self.sent += 1
         self.bytes_in_flight += BYTES_PER_PACKET
+
+        # the old time will <= cur_time if there is no pacing due to the sequential processing
+        old_time = self.cur_time
+        self.cur_time = max(cur_time, self.cur_time) + 1 / self.pacing_rate
+        return max(old_time-cur_time, .0)
 
 
     def on_packet_acked(self, rtt, packet):

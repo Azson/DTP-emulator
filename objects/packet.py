@@ -13,6 +13,7 @@ class Packet(object):
                  packet_type="S",
                  drop = False,
                  send_delay=.0,
+                 pacing_delay = .0,
                  latency=.0
                  ):
         self.packet_type = packet_type
@@ -21,12 +22,13 @@ class Packet(object):
         self.block_id = block_id
         self.offset = offset
         self.packet_id = packet_id
-        self.payload=payload
-        self.packet_size=packet_size
+        self.payload = payload
+        self.packet_size = packet_size
         self.deadline = deadline
         self.drop = drop
 
         self.send_delay = send_delay
+        self.pacing_delay = pacing_delay
         self.latency = latency
 
         if packet_id is None:
@@ -54,6 +56,7 @@ class Packet(object):
             "Type": self.packet_type,
             "Position": self.next_hop,
             "Send_delay": self.send_delay,
+            "Pacing_delay" : self.pacing_delay,
             "Lantency": self.latency,
             "Drop": 1 if self.drop else 0,
             "Packet_id": self.packet_id,

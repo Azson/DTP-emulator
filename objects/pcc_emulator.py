@@ -4,12 +4,12 @@ import numpy as np
 from utils import (
     get_emulator_info
 )
-from objects.sender import Sender
 from objects.windows_based_sender import Sender as W_sender
 from objects.link import Link
 from objects.engine import Engine
 
 from player import congestion_control_algorithm
+from player.examples.bbr import BBR
 
 
 class PccEmulator(object):
@@ -64,8 +64,10 @@ class PccEmulator(object):
         self.links = [Link(self.trace_list, queue) , Link([], queue)]
         #self.senders = [Sender(0.3 * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         #self.senders = [Sender(random.uniform(0.2, 0.7) * bw, [self.links[0], self.links[1]], 0, self.history_len)]
+        solution = congestion_control_algorithm.Solution()
+        # solution = BBR()
         self.senders = [W_sender(self.links, 0, self.features,
-                               history_len=self.history_len, solution=congestion_control_algorithm.Solution())]
+                               history_len=self.history_len, solution=solution)]
         for item in self.senders:
             item.init_application(self.block_file)
 

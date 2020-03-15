@@ -101,26 +101,12 @@ class Appication_Layer(object):
 
         return best_block
 
-
-    def get_retrans_packet(self):
-        for block_id, packet_list in self.ack_blocks.items():
-            if self.is_sended_block(block_id):
-                continue
-            for i in range(self.blocks_status[block_id].split_nums):
-                if i not in packet_list:
-                    return i
-        return None
-
-
     def get_next_packet(self, cur_time):
         self.pass_time = cur_time
         if self.now_block is None or self.now_block_offset == self.now_block.split_nums:
-            # 1. the retransmisson time is bad, which may cause consistently loss packet
-            # 2. the packet will be retransmission many times for a while
             self.now_block = self.select_block()
             if self.now_block is None:
                 return None
-
             self.now_block_offset = 0
             self.now_block.split_nums = int(np.ceil(self.now_block.size /
                                             (self.bytes_per_packet - self.head_per_packet)))
@@ -184,7 +170,8 @@ class Appication_Layer(object):
 
 
     def is_sended_block(self, block_id):
-        if len(self.ack_blocks[block_id]) == self.blocks_status[block_id].split_nums:
+        if block_id in self.ack_blocks and \
+                len(self.ack_blocks[block_id]) == self.blocks_status[block_id].split_nums:
             return True
         return False
 
@@ -196,7 +183,3 @@ class Appication_Layer(object):
             debug_print("block {} not finished!".format(block_id))
             self.log_block(self.blocks_status[block_id])
         return None
-
-
-    def analyze_application(self):
-        pass
