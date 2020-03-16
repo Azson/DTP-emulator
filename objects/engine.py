@@ -17,7 +17,6 @@ class Engine():
         self.log_items = 0
         self.last_alert_time = 0
 
-
     def queue_initial_packets(self):
         for sender in self.senders:
             sender.register_network(self)
@@ -26,7 +25,6 @@ class Engine():
             if packet:
                 heapq.heappush(self.q, (1.0 / sender.rate, sender, packet))
 
-
     def reset(self):
         self.cur_time = 0.0
         self.q = []
@@ -34,10 +32,8 @@ class Engine():
         [sender.reset() for sender in self.senders]
         self.queue_initial_packets()
 
-
     def get_cur_time(self):
         return self.cur_time
-
 
     def run_for_dur(self, dur):
         end_time = self.cur_time + dur
@@ -67,7 +63,6 @@ class Engine():
                 if next_hop == len(sender.path):
                     self.append_cc_input(event_time, sender, packet)
                     if dropped:
-                        # How do the drop packet transmission
                         sender.on_packet_lost(event_time, packet)
                         # print("Packet lost at time %f" % self.cur_time)
                     else:
@@ -82,7 +77,6 @@ class Engine():
                 # ack back to source
                 else:
                     new_next_hop = next_hop + 1
-                    # bug : not update last enter link time. How treat drop packet from last link
                     link_latency = sender.path[next_hop].get_cur_latency(self.cur_time)
                     if USE_LATENCY_NOISE:
                         link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
@@ -93,8 +87,9 @@ class Engine():
                 if next_hop == 0:
                     # print("Packet sent at time %f" % self.cur_time)
                     if sender.can_send_packet():
-                        pacing_time = sender.on_packet_sent(new_event_time)
+                        pacing_time, extra_info = sender.on_packet_sent(new_event_time)
                         packet.pacing_delay += pacing_time
+                        packet.extra = extra_info
                         push_new_event = True
                     else:
                         sender.wait_for_push_packets.append([event_time, sender, packet])
@@ -154,7 +149,6 @@ class Engine():
         # reward = (throughput / RATE_OBS_SCALE) * np.exp(-1 * (LATENCY_PENALTY * latency / LAT_OBS_SCALE + LOSS_PENALTY * loss))
         return reward * REWARD_SCALE
 
-
     def log_packet(self, event_time, sender, packet):
         '''
         packet is tuple of (event_time, sender, event_type, next_hop, cur_latency, dropped, packet_id, life)
@@ -194,7 +188,6 @@ class Engine():
         self.log_items += 1
         return packet
 
-
     def append_cc_input(self, event_time, sender, packet, event_type="packet"):
 
         if event_type == "packet":
@@ -214,7 +207,6 @@ class Engine():
             sender.cwnd = feed_back["cwnd"] if "cwnd" in feed_back else sender.cwnd
             sender.rate = feed_back["send_rate"] if "send_rate" in feed_back else sender.rate
             sender.pacing_rate = feed_back["pacing_rate"] if "pacing_rate" in feed_back else sender.pacing_rate
-
 
     def close(self):
         print("Time {}s : There is no packet from application~".format(self.cur_time))

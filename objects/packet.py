@@ -30,17 +30,16 @@ class Packet(object):
         self.send_delay = send_delay
         self.pacing_delay = pacing_delay
         self.latency = latency
+        self.extra = {}
 
         if packet_id is None:
             self.packet_id = Packet._get_next_packet()
-
 
     @classmethod
     def _get_next_packet(cls):
         result = cls._packet_id
         cls._packet_id += 1
         return result
-
 
     def parse(self):
 
@@ -49,7 +48,6 @@ class Packet(object):
                 self.latency,
                 self.drop,
                 self.packet_id]
-
 
     def trans2dict(self):
         print_data = {
@@ -65,10 +63,10 @@ class Packet(object):
             "Deadline": self.deadline,
             "Offset" : self.offset,
             "Payload" : self.payload,
-            "Packet_size" : self.packet_size
+            "Packet_size" : self.packet_size,
+            "Extra" : self.extra
         }
         return print_data
-
 
     def create_retrans_packet(self, cur_time):
 
@@ -79,10 +77,8 @@ class Packet(object):
                       packet_size=self.packet_size,
                       payload=self.payload)
 
-
     def __lt__(self, other):
         return self.create_time < other.create_time
-
 
     def __str__(self):
         print_data = self.trans2dict()
