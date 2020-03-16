@@ -12,7 +12,8 @@ class CongestionControl(object):
 
         output = {
             "cwnd" : self.cwnd,
-            "send_rate" : self.send_rate
+            "send_rate" : self.send_rate,
+            "extra" : { }
         }
 
         return output

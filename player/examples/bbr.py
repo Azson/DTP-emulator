@@ -10,10 +10,6 @@ class BBR(Reno):
         self._input_list = []
         self.call_nums = 0
 
-        self.cwnd = 10
-        # Initialize pacing rate to: high_gain * init_cwnd
-        self.pacing_rate = 10 * self.bbr_high_gain
-
         self.maxbw = None
         self.minrtt = None
 
@@ -25,36 +21,45 @@ class BBR(Reno):
 
         # Window length of min_rtt filter (in sec)
         self.bbr_min_rtt_win_sec = 10
-        # Minimum time (in ms) spent at bbr_cwnd_min_target in BBR_PROBE_RTT mode
-        self.bbr_probe_rtt_mode_ms = 200
+
+        # Minimum time (in s) spent at bbr_cwnd_min_target in BBR_PROBE_RTT mode
+        self.bbr_probe_rtt_mode_ms = 0.2
 
         self.bbr_high_gain = 2885 / 1000 + 1
         self.bbr_drain_gain = 1000 / 2885
+
         # probe_bw
         self.bbr_cwnd_gain = 2
         self.probe_bw_gain = [5 / 4, 4 / 3, 1]
+
         self.probe_rtt_gain = 1
+
         self.bbr_min_cwnd = 4
 
         self.pacing_gain = self.bbr_high_gain
         self.cwnd_gain = self.bbr_high_gain
 
-        self.delivered_nums = 0
-        self.ack_pairs = {}
-        self.send_pairs = {}
-
         # to check when the mode come to drain
-        self.three_bws = [0] * 4
+        self.four_bws = [0] * 4
 
-        self.drain_start_time = 0
+        # the start time of probe rtt
+        self.probe_rtt_time = 0
 
         self.delivered = 0
+        self.delivered_nums = 0
+
+        # used to check when come to PROBE_RTT mode
+        self.ten_sec_wnd = []
+
+        self.send_rate = float("inf")
+        self.cwnd = 10
+        # Initialize pacing rate to: high_gain * init_cwnd
+        self.pacing_rate = 10 * self.bbr_high_gain
 
     # calculate rtt and bw on ack
-    def cal_rtt_bw(self, packet_id):
-        delivered = self.ack_pairs[packet_id][0] - self.send_pairs[packet_id][0]
-        rtt = self.ack_pairs[packet_id][1] - self.send_pairs[packet_id][1]
-        return rtt, delivered / rtt
+    def cal_bw(self, send_delivered, rtt):
+        delivered = self.delivered_nums - send_delivered
+        return delivered / rtt
 
 
     def stop_increasing(self, bws):
@@ -64,8 +69,24 @@ class BBR(Reno):
         return len(bws) == 4 and bws[0] and bws[1] and bws[2] \
                and scale1 < 0.25 and scale2 < 0.25 and scale3 < 0.25
 
-    def change_probe_rtt(self):
-        pass
+    #
+    def swto_probe_rtt(self):
+        time_distance = self.ten_sec_wnd[-1][0] -  self.ten_sec_wnd[0][0]
+        if  self.bbr_min_rtt_win_sec <=  time_distance <= self.bbr_min_rtt_win_sec + 0.01:
+            for time_bw in self.ten_sec_wnd:
+                if time_bw[1] <= self.minrtt:
+                    return False
+        return True
+
+    def update_sec_wnd(self, time_bw):
+        if len(self.ten_sec_wnd) <= 1:
+            self.ten_sec_wnd.append(time_bw)
+        if time_bw[0] - self.ten_sec_wnd[0][0] <= self.bbr_min_rtt_win_sec + 0.01:
+            self.ten_sec_wnd.append(time_bw)
+        else:
+            self.ten_sec_wnd.pop(0)
+            self.ten_sec_wnd.append(time_bw)
+
 
     def update_bw_rtt(self, maxbw, minrtt):
         self.maxbw = maxbw
@@ -98,61 +119,72 @@ class BBR(Reno):
         output = {
             "cwnd": self.cwnd,
             "send_rate": float("inf"),
-            "pacing_rate": 100.
+            "pacing_rate": 100.,
+            "extra": {
+                "delivered": self.delivered_nums
+            }
         }
 
         return output
 
     def cc_trigger(self, data):
-        packet_type = data["Type"]
-        packet_id = data["Packet_id"]
+
+        packet_type = data["packet_type"]
         event_time = data["event_time"]
-        lantency = data["Lantency"]
+        packet = data["packet"]
+        rtt = packet["Lantency"]
+
+
         maxbw, minrtt = float("-inf"), float("inf")
-        if packet_type == EVENT_TYPE_ACK:
+        if packet_type == PACKET_TYPE_FINISHED:
             self.delivered_nums += 1
-            self.ack_pairs[packet_id] = [self.delivered_nums, event_time]
-            rtt, bw = self.cal_rtt_bw(packet_id)
+
+            send_delivered = packet["Extra"]["delivered"]
+            bw = self.cal_bw(send_delivered, rtt)
+            time_bw = [event_time, bw]
+            self.update_sec_wnd(time_bw)
 
             maxbw = max(maxbw, bw)
             minrtt = min(minrtt, rtt)
 
-            if self.ack_pairs[packet_id][0] > self.delivered:
-                self.delivered = self.ack_pairs[packet_id][0]
+            # todo : feel like delivered_nums is always greater than self.delivered
+            # todo : the meaning of sack, the round of rtt
+            # todo : the 768 line of bbr source coder
 
-                self.three_bws[:] = self.three_bws[-3:] + [maxbw]
-                if self.stop_increasing(self.three_bws) and self.mode == self.bbr_mode[0]:
-                    self.mode = self.bbr_mode[1]
-                    self.drain_start_time = event_time
-
+            if self.delivered_nums > self.delivered:
+                self.delivered = self.delivered_nums
+                self.four_bws[:] = self.four_bws[-3:] + [maxbw]
                 self.bbr_bw_rtts -= 1
+
                 if self.bbr_bw_rtts == 0:
                     self.update_bw_rtt(maxbw, minrtt)
                     self.bbr_bw_rtts = 10
                     self.set_output(self.mode)
 
-        if self.mode == self.bbr_mode[1]:
+
+            if self.swto_probe_rtt():
+                self.mode = self.bbr_mode[3]
+                self.probe_rtt_time = event_time
+
+
+        if self.mode == self.bbr_mode[0]:
+            if self.stop_increasing(self.four_bws):
+                self.mode = self.bbr_mode[1]
+
+        elif self.mode == self.bbr_mode[1]:
+
             inflight = data['Waiting_for_ack_nums']
             BDP = self.maxbw * self.minrtt
             if BDP < inflight:
                 self.mode = self.bbr_mode[2]
 
-            # how to check staying 10s and the rtt all greater than min_rtt
-            if self.change_probe_rtt():
-                self.mode = self.bbr_mode[3]
-
-        elif self.mode == self.bbr_mode[2]:
-            if self.change_probe_rtt():
-                self.mode = self.bbr_mode[3]
         elif self.mode == self.bbr_mode[3]:
             self.cwnd = self.bbr_min_cwnd
-            # after lasting 200ms,
-            # if self.stop_increasing(self.three_bws):
-            #     self.mode = self.bbr_mode[2]
-            # else:
-            #     self.mode = self.bbr_mode[0]
+            if event_time - self.probe_rtt_time > self.bbr_probe_rtt_mode_ms:
+                if self.stop_increasing(self.four_bws):
+                    self.mode = self.bbr_mode[2]
+                else:
+                    self.mode = self.bbr_mode[0]
 
 
-        elif packet_type == EVENT_TYPE_SEND:
-            self.send_pairs[packet_id] = [self.delivered_nums, event_time - lantency]
 
