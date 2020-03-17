@@ -85,8 +85,8 @@ class BBR(Reno):
 
     def set_output(self, mode):
         pacing_gain, cwnd_gain = self.cal_gain(mode)
-        self.pacing_rate = max(10 * self.bbr_high_gain, pacing_gain * self.maxbw)
-        self.cwnd = max(self.maxbw * self.minrtt * cwnd_gain, 10)
+        self.pacing_rate = pacing_gain * self.maxbw
+        self.cwnd = max(self.maxbw * self.minrtt * cwnd_gain, 4)
 
     def cal_gain(self, mode):
         pacing_gain, cwnd_gain = 0, 0
@@ -114,7 +114,12 @@ class BBR(Reno):
             "send_rate": float("inf"),
             "pacing_rate": self.pacing_rate,
             "extra": {
-                "delivered": self.delivered_nums
+                "delivered": self.delivered_nums,
+                "pcing_rate" : self.pacing_rate,
+                "pacing_gain" : self.pacing_gain,
+                "cwnd_gain" : self.cwnd_gain,
+                "max_bw" : self.maxbw,
+                "min_rtt" : self.minrtt
             }
         }
 
@@ -156,15 +161,15 @@ class BBR(Reno):
             # todo : the meaning of sack, the round of rtt
             # todo : the 768 line of bbr source coder
 
-            if self.delivered_nums > self.delivered:
-                self.delivered = self.delivered_nums
-                self.four_bws[:] = self.four_bws[-3:] + [maxbw]
-                self.bbr_bw_rtts -= 1
+            # if self.delivered_nums > self.delivered:
+            #     self.delivered = self.delivered_nums
+            self.four_bws[:] = self.four_bws[-3:] + [maxbw]
+            self.bbr_bw_rtts -= 1
 
-                if self.bbr_bw_rtts == 0:
-                    self.update_bw_rtt(maxbw, minrtt)
-                    self.bbr_bw_rtts = 10
-                    self.set_output(self.mode)
+            if self.delivered_nums % 10 == 0 and self.delivered_nums > 0:
+                self.update_bw_rtt(maxbw, minrtt)
+                self.set_output(self.mode)
+                self.bbr_bw_rtts = 10
 
             if self.mode == self.bbr_mode[0]:
                 if self.stop_increasing(self.four_bws):
