@@ -52,9 +52,9 @@ class BBR(Reno):
         self.ten_sec_wnd = []
 
         self.send_rate = float("inf")
-        self.cwnd = 10
+        self.cwnd = 16
         # Initialize pacing rate to: high_gain * init_cwnd
-        self.pacing_rate = 10 * self.bbr_high_gain
+        self.pacing_rate = self.cwnd * self.bbr_high_gain
 
     # calculate rtt and bw on ack
     def cal_bw(self, send_delivered, rtt):
@@ -81,11 +81,14 @@ class BBR(Reno):
     def update_sec_wnd(self, time_bw):
         if len(self.ten_sec_wnd) <= 1:
             self.ten_sec_wnd.append(time_bw)
-        if time_bw[0] - self.ten_sec_wnd[0][0] <= self.bbr_min_rtt_win_sec + 0.01:
+        if time_bw[0] - self.ten_sec_wnd[0][0] <= self.bbr_min_rtt_win_sec:
             self.ten_sec_wnd.append(time_bw)
         else:
-            self.ten_sec_wnd.pop(0)
+            min_time = self.ten_sec_wnd.pop(0)[0]
+            while time_bw[0] - min_time > self.bbr_min_rtt_win_sec:
+                min_time = self.ten_sec_wnd.pop(0)[0]
             self.ten_sec_wnd.append(time_bw)
+
 
 
     def update_bw_rtt(self, maxbw, minrtt):
@@ -121,7 +124,7 @@ class BBR(Reno):
         output = {
             "cwnd": self.cwnd,
             "send_rate": float("inf"),
-            "pacing_rate": 100.,
+            "pacing_rate": self.pacing_rate,
             "extra": {
                 "delivered": self.delivered_nums
             }
