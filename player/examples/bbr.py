@@ -23,7 +23,7 @@ class BBR(Reno):
         self.bbr_min_rtt_win_sec = 10
 
         # Minimum time (in s) spent at bbr_cwnd_min_target in BBR_PROBE_RTT mode
-        self.bbr_probe_rtt_mode_ms = 0.2
+        self.bbr_probe_rtt_mode_s = 0.2
 
         self.bbr_high_gain = 2885 / 1000 + 1
         self.bbr_drain_gain = 1000 / 2885
@@ -74,8 +74,8 @@ class BBR(Reno):
 
     #
     def swto_probe_rtt(self):
-        for time_bw in self.ten_sec_wnd[1:]:
-            if time_bw[1] <= self.ten_sec_wnd[0][1]:
+        for time_rtt in self.ten_sec_wnd[1:]:
+            if time_rtt[1] <= self.ten_sec_wnd[0][1]:
                 return False
         return True
 
@@ -87,8 +87,6 @@ class BBR(Reno):
         pacing_gain, cwnd_gain = self.cal_gain(mode)
         self.pacing_rate = max(10 * self.bbr_high_gain, pacing_gain * self.maxbw)
         self.cwnd = max(self.maxbw * self.minrtt * cwnd_gain, 10)
-        # self.pacing_rate =  10 * self.bbr_high_gain
-        # self.cwnd =  10
 
     def cal_gain(self, mode):
         pacing_gain, cwnd_gain = 0, 0
@@ -137,18 +135,19 @@ class BBR(Reno):
             send_delivered = packet["Extra"]["delivered"]
             bw = self.cal_bw(send_delivered, rtt)
 
-            time_bw = [event_time, bw]
-            if len(self.ten_sec_wnd) <= 1 or \
-                    time_bw[0] - self.ten_sec_wnd[0][0] < self.bbr_min_rtt_win_sec:
-                self.ten_sec_wnd.append(time_bw)
-            else:
+            time_rtt = [event_time, rtt]
+
+            if len(self.ten_sec_wnd) > 1 and \
+                    event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec :
                 if self.swto_probe_rtt():
                    self.mode = self.bbr_mode[3]
+                   self.cwnd = self.bbr_min_cwnd
                    self.probe_rtt_time = event_time
                 min_time = self.ten_sec_wnd.pop(0)[0]
-                while time_bw[0] - min_time >= self.bbr_min_rtt_win_sec:
+                while time_rtt[0] - min_time >= self.bbr_min_rtt_win_sec:
                     min_time = self.ten_sec_wnd.pop(0)[0]
-                self.ten_sec_wnd.append(time_bw)
+
+            self.ten_sec_wnd.append(time_rtt)
 
             maxbw = max(maxbw, bw)
             minrtt = min(minrtt, rtt)
@@ -172,15 +171,13 @@ class BBR(Reno):
                     self.mode = self.bbr_mode[1]
 
             elif self.mode == self.bbr_mode[1]:
-
                 inflight = packet["Extra"]["inflight"]
                 BDP = self.maxbw * self.minrtt
-                if BDP < inflight:
+                if BDP >= inflight:
                     self.mode = self.bbr_mode[2]
 
             elif self.mode == self.bbr_mode[3]:
-                self.cwnd = self.bbr_min_cwnd
-                if event_time - self.probe_rtt_time > self.bbr_probe_rtt_mode_ms:
+                if event_time - self.probe_rtt_time >= self.bbr_probe_rtt_mode_s:
                     if self.stop_increasing(self.four_bws):
                         self.mode = self.bbr_mode[2]
                     else:
