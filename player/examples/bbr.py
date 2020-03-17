@@ -52,7 +52,7 @@ class BBR(Reno):
         self.ten_sec_wnd = []
 
         self.send_rate = float("inf")
-        self.cwnd = 16
+        self.cwnd = 10
         # Initialize pacing rate to: high_gain * init_cwnd
         self.pacing_rate = self.cwnd * self.bbr_high_gain
 
@@ -63,33 +63,21 @@ class BBR(Reno):
 
 
     def stop_increasing(self, bws):
-        scale1 = (bws[1] - bws[0]) / bws[0]
-        scale2 = (bws[2] - bws[1]) / bws[1]
-        scale3 = (bws[3] - bws[2]) / bws[2]
-        return len(bws) == 4 and bws[0] and bws[1] and bws[2] \
-               and scale1 < 0.25 and scale2 < 0.25 and scale3 < 0.25
+        scale1, scale2, scale3 = 1, 1, 1
+        if bws[0]:
+            scale1 = (bws[1] - bws[0]) / bws[0]
+        if bws[1]:
+            scale2 = (bws[2] - bws[1]) / bws[1]
+        if bws[2]:
+            scale3 = (bws[3] - bws[2]) / bws[2]
+        return len(bws) == 4  and scale1 < 0.25 and scale2 < 0.25 and scale3 < 0.25
 
     #
     def swto_probe_rtt(self):
-        time_distance = self.ten_sec_wnd[-1][0] -  self.ten_sec_wnd[0][0]
-        if  self.bbr_min_rtt_win_sec <=  time_distance <= self.bbr_min_rtt_win_sec + 0.01:
-            for time_bw in self.ten_sec_wnd[1:]:
-                if time_bw[1] <= self.ten_sec_wnd[0][1]:
-                    return False
+        for time_bw in self.ten_sec_wnd[1:]:
+            if time_bw[1] <= self.ten_sec_wnd[0][1]:
+                return False
         return True
-
-    def update_sec_wnd(self, time_bw):
-        if len(self.ten_sec_wnd) <= 1:
-            self.ten_sec_wnd.append(time_bw)
-        if time_bw[0] - self.ten_sec_wnd[0][0] <= self.bbr_min_rtt_win_sec:
-            self.ten_sec_wnd.append(time_bw)
-        else:
-            min_time = self.ten_sec_wnd.pop(0)[0]
-            while time_bw[0] - min_time > self.bbr_min_rtt_win_sec:
-                min_time = self.ten_sec_wnd.pop(0)[0]
-            self.ten_sec_wnd.append(time_bw)
-
-
 
     def update_bw_rtt(self, maxbw, minrtt):
         self.maxbw = maxbw
@@ -99,6 +87,8 @@ class BBR(Reno):
         pacing_gain, cwnd_gain = self.cal_gain(mode)
         self.pacing_rate = max(10 * self.bbr_high_gain, pacing_gain * self.maxbw)
         self.cwnd = max(self.maxbw * self.minrtt * cwnd_gain, 10)
+        # self.pacing_rate =  10 * self.bbr_high_gain
+        # self.cwnd =  10
 
     def cal_gain(self, mode):
         pacing_gain, cwnd_gain = 0, 0
@@ -139,8 +129,8 @@ class BBR(Reno):
         packet = data["packet"]
         rtt = packet["Lantency"]
 
-
         maxbw, minrtt = float("-inf"), float("inf")
+
         if packet_type == PACKET_TYPE_FINISHED:
             self.delivered_nums += 1
 
@@ -148,11 +138,17 @@ class BBR(Reno):
             bw = self.cal_bw(send_delivered, rtt)
 
             time_bw = [event_time, bw]
-            self.update_sec_wnd(time_bw)
-
-            if self.swto_probe_rtt():
-                self.mode = self.bbr_mode[3]
-                self.probe_rtt_time = event_time
+            if len(self.ten_sec_wnd) <= 1 or \
+                    time_bw[0] - self.ten_sec_wnd[0][0] < self.bbr_min_rtt_win_sec:
+                self.ten_sec_wnd.append(time_bw)
+            else:
+                if self.swto_probe_rtt():
+                   self.mode = self.bbr_mode[3]
+                   self.probe_rtt_time = event_time
+                min_time = self.ten_sec_wnd.pop(0)[0]
+                while time_bw[0] - min_time >= self.bbr_min_rtt_win_sec:
+                    min_time = self.ten_sec_wnd.pop(0)[0]
+                self.ten_sec_wnd.append(time_bw)
 
             maxbw = max(maxbw, bw)
             minrtt = min(minrtt, rtt)
