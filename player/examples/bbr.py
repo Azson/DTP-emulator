@@ -10,8 +10,8 @@ class BBR(Reno):
         self._input_list = []
         self.call_nums = 0
 
-        self.maxbw = None
-        self.minrtt = None
+        self.maxbw = float("-inf")
+        self.minrtt = float("inf")
 
         self.bbr_mode = ["BBR_STARTUP", "BBR_DRAIN", "BBR_PROBE_BW", "BBR_PROBE_RTT"]
         self.mode = "BBR_STARTUP"
@@ -167,24 +167,23 @@ class BBR(Reno):
                     self.bbr_bw_rtts = 10
                     self.set_output(self.mode)
 
-
-        if self.mode == self.bbr_mode[0]:
-            if self.stop_increasing(self.four_bws):
-                self.mode = self.bbr_mode[1]
-
-        elif self.mode == self.bbr_mode[1]:
-
-            inflight = packet["Extra"]["inflight"]
-            BDP = self.maxbw * self.minrtt
-            if BDP < inflight:
-                self.mode = self.bbr_mode[2]
-
-        elif self.mode == self.bbr_mode[3]:
-            self.cwnd = self.bbr_min_cwnd
-            if event_time - self.probe_rtt_time > self.bbr_probe_rtt_mode_ms:
+            if self.mode == self.bbr_mode[0]:
                 if self.stop_increasing(self.four_bws):
+                    self.mode = self.bbr_mode[1]
+
+            elif self.mode == self.bbr_mode[1]:
+
+                inflight = packet["Extra"]["inflight"]
+                BDP = self.maxbw * self.minrtt
+                if BDP < inflight:
                     self.mode = self.bbr_mode[2]
-                else:
-                    self.mode = self.bbr_mode[0]
+
+            elif self.mode == self.bbr_mode[3]:
+                self.cwnd = self.bbr_min_cwnd
+                if event_time - self.probe_rtt_time > self.bbr_probe_rtt_mode_ms:
+                    if self.stop_increasing(self.four_bws):
+                        self.mode = self.bbr_mode[2]
+                    else:
+                        self.mode = self.bbr_mode[0]
 
 
