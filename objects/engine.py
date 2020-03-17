@@ -98,7 +98,7 @@ class Engine():
                     _packet = sender.new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
                         heapq.heappush(sender.wait_for_push_packets, [event_time, sender, _packet])
-                        if not USE_CWND or sender.cwnd > 1 + len(self.q) + len(sender.wait_for_push_packets):
+                        if not USE_CWND or sender.cwnd > sender.get_waiting_ack_nums():
                             item = heapq.heappop(sender.wait_for_push_packets)
                             heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \
                                                     item[1], item[2]))
@@ -113,8 +113,8 @@ class Engine():
                 if USE_LATENCY_NOISE:
                     link_latency *= random.uniform(1.0, MAX_LATENCY_NOISE)
                 new_latency += link_latency
+                new_dropped = not sender.path[next_hop].packet_enters_link(new_event_time)
                 new_event_time += link_latency
-                new_dropped = not sender.path[next_hop].packet_enters_link(self.cur_time)
 
             if push_new_event:
                 packet.next_hop = new_next_hop
