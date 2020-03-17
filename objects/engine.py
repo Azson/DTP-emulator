@@ -199,6 +199,7 @@ class Engine():
                 "packet_type" : get_packet_type(sender, packet),
                 "packet" : packet.trans2dict()
             }
+            data["packet"]["Extra"]["inflight"] = sender.get_waiting_ack_nums()
         # todo : how to design system information
         elif event_type == "system":
             data = {

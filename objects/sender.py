@@ -71,11 +71,11 @@ class Sender():
             self.set_cwnd(self.cwnd / (1.0 - delta))
 
     def can_send_packet(self):
+        ret = self.solution.make_decision()
+        self.rate = ret["send_rate"] if "send_rate" in ret else self.rate
+        self.cwnd = ret["cwnd"] if "cwnd" in ret else self.cwnd
+        self.extra = ret["extra"] if "extra" in ret else self.extra
         if USE_CWND:
-            ret = self.solution.make_decision()
-            self.rate = ret["send_rate"] if "send_rate" in ret else self.rate
-            self.cwnd = ret["cwnd"] if "cwnd" in ret else self.cwnd
-            self.extra = ret["extra"] if "extra" in ret else self.extra
             return int(self.bytes_in_flight) / BYTES_PER_PACKET < self.cwnd
         else:
             return True
