@@ -1,7 +1,8 @@
 from objects.sender import Sender as Super_sender
+import heapq
+
 
 class Sender(Super_sender):
-
 
     def slide_windows(self, cur_time):
         ret = []
@@ -11,7 +12,7 @@ class Sender(Super_sender):
                 if _packet is None:
                     return ret
             else:
-                _packet = self.wait_for_push_packets.pop(0)[2]
+                _packet = heapq.heappop(self.wait_for_push_packets)[2]
             ret.append(_packet)
 
         return ret

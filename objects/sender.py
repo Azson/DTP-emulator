@@ -25,8 +25,9 @@ class Sender():
 
         self.solution = solution
         ret = check_solution_format(self.solution.make_decision())
-        self.rate = ret["send_rate"]
-        self.cwnd = ret["cwnd"]
+        self.rate = ret["send_rate"] if "send_rate" in ret else float("inf")
+        # Not use this if USE_CWND=FALSE
+        self.cwnd = ret["cwnd"] if "cwnd" in ret else 25
         self.starting_rate = self.rate
         self.pacing_rate = ret["pacing_rate"] if "pacing_rate" in ret else float("inf")
         self.cur_time = 0
@@ -177,3 +178,6 @@ class Sender():
         self.reset_obs()
         self.history = sender_obs.SenderHistory(self.history_len,
                                                 self.features, self.id)
+
+    def __lt__(self, other):
+        return False

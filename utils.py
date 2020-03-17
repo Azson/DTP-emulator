@@ -120,11 +120,10 @@ def check_solution_format(input):
         raise TypeError("The return value should be a dict!")
 
     keys = ["cwnd", "send_rate"]
-    for item in keys:
-        if not item in input.keys():
-            raise ValueError("Key %s should in the return dict!" % (item))
-
-    return input
+    if keys[0] in input or keys[1] in input:
+        return input
+    else:
+        raise ValueError("One of the keys %s should in the return dict!" % (keys))
 
 
 def get_emulator_info(sender_mi):
@@ -174,6 +173,9 @@ def time_filter(data, time_range):
 
 
 def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=False):
+    if not USE_CWND:
+        print("Your congestion control don't use windows~")
+        return
     plt_data = []
     with open(log_file, "r") as f:
         for line in f.readlines():
@@ -197,11 +199,11 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
     data_Ucwnd = []
     last_cwnd = -1
     for item in plt_data:
-        if item["Cwnd"] == last_cwnd:
+        if item["Extra"]["Cwnd"] == last_cwnd:
             continue
-        last_cwnd = item["Cwnd"]
+        last_cwnd = item["Extra"]["Cwnd"]
         data_time.append(item["Time"])
-        data_cwnd.append(item["Cwnd"])
+        data_cwnd.append(item["Extra"]["Cwnd"])
         data_Ucwnd.append(item["Waiting_for_ack_nums"])
 
     pic = plt.figure(figsize=(50, 30*pic_nums))
