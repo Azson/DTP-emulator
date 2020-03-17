@@ -107,7 +107,7 @@ class BBR(Reno):
             cwnd_gain = self.bbr_high_gain
 
         elif mode == self.bbr_mode[2]:
-            pacing_gain = self.probe_bw_gain[random.randint(0, 3)]
+            pacing_gain = self.probe_bw_gain[random.randint(0, 2)]
             cwnd_gain = pacing_gain
 
         elif mode == self.bbr_mode[3]:
@@ -175,7 +175,7 @@ class BBR(Reno):
 
         elif self.mode == self.bbr_mode[1]:
 
-            inflight = data['Waiting_for_ack_nums']
+            inflight = packet["Extra"]["inflight"]
             BDP = self.maxbw * self.minrtt
             if BDP < inflight:
                 self.mode = self.bbr_mode[2]
