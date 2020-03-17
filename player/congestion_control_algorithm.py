@@ -1,5 +1,5 @@
 from .examples.reno import Reno
+from .examples.bbr import BBR
 
-
-class Solution(Reno):
+class Solution(BBR):
     pass

@@ -105,9 +105,11 @@ class BBR(Reno):
         elif mode == self.bbr_mode[1]:
             pacing_gain = self.bbr_drain_gain
             cwnd_gain = self.bbr_high_gain
+
         elif mode == self.bbr_mode[2]:
             pacing_gain = self.probe_bw_gain[random.randint(0, 3)]
             cwnd_gain = pacing_gain
+
         elif mode == self.bbr_mode[3]:
             pacing_gain = 1
             cwnd_gain = 1
@@ -160,6 +162,7 @@ class BBR(Reno):
                     self.update_bw_rtt(maxbw, minrtt)
                     self.bbr_bw_rtts = 10
                     self.set_output(self.mode)
+
 
 
             if self.swto_probe_rtt():
