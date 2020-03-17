@@ -73,8 +73,8 @@ class BBR(Reno):
     def swto_probe_rtt(self):
         time_distance = self.ten_sec_wnd[-1][0] -  self.ten_sec_wnd[0][0]
         if  self.bbr_min_rtt_win_sec <=  time_distance <= self.bbr_min_rtt_win_sec + 0.01:
-            for time_bw in self.ten_sec_wnd:
-                if time_bw[1] <= self.minrtt:
+            for time_bw in self.ten_sec_wnd[1:]:
+                if time_bw[1] <= self.ten_sec_wnd[0][1]:
                     return False
         return True
 
@@ -143,8 +143,13 @@ class BBR(Reno):
 
             send_delivered = packet["Extra"]["delivered"]
             bw = self.cal_bw(send_delivered, rtt)
+
             time_bw = [event_time, bw]
             self.update_sec_wnd(time_bw)
+
+            if self.swto_probe_rtt():
+                self.mode = self.bbr_mode[3]
+                self.probe_rtt_time = event_time
 
             maxbw = max(maxbw, bw)
             minrtt = min(minrtt, rtt)
@@ -162,12 +167,6 @@ class BBR(Reno):
                     self.update_bw_rtt(maxbw, minrtt)
                     self.bbr_bw_rtts = 10
                     self.set_output(self.mode)
-
-
-
-            if self.swto_probe_rtt():
-                self.mode = self.bbr_mode[3]
-                self.probe_rtt_time = event_time
 
 
         if self.mode == self.bbr_mode[0]:
@@ -188,6 +187,5 @@ class BBR(Reno):
                     self.mode = self.bbr_mode[2]
                 else:
                     self.mode = self.bbr_mode[0]
-
 
 
