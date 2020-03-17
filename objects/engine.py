@@ -69,9 +69,10 @@ class Engine():
                         # may acked packet which is not in window after packet loss
                         sender.on_packet_acked(cur_latency, packet)
                         # print("Packet acked at time %f" % self.cur_time)
-                    # for reno
-                    for _packet in sender.slide_windows(self.cur_time):
-                        heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
+                    # for windows-based cc
+                    if USE_CWND:
+                        for _packet in sender.slide_windows(self.cur_time):
+                            heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
 
                 # ack back to source
@@ -96,11 +97,11 @@ class Engine():
                     # when do the packet create ? before or after pacing ?
                     _packet = sender.new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
-                        if sender.cwnd > 1 + len(self.q) + len(sender.wait_for_push_packets):
-                            heapq.heappush(self.q, (max(new_event_time + (1.0 / sender.rate), _packet.create_time), \
-                                                    sender, _packet))
-                        else:
-                            sender.wait_for_push_packets.append([event_time, sender, _packet])
+                        heapq.heappush(sender.wait_for_push_packets, [event_time, sender, _packet])
+                        if not USE_CWND or sender.cwnd > 1 + len(self.q) + len(sender.wait_for_push_packets):
+                            item = heapq.heappop(sender.wait_for_push_packets)
+                            heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \
+                                                    item[1], item[2]))
                     new_event_time += pacing_time
                 else:
                     push_new_event = True
@@ -177,11 +178,13 @@ class Engine():
 
         log_data = {
             "Time" : event_time,
-            "Cwnd" : sender.cwnd,
-            # "Send_rate" : sender.rate,
             "Waiting_for_ack_nums" : sender.get_waiting_ack_nums()
         }
         log_data.update(packet.trans2dict())
+        if USE_CWND:
+            log_data["Extra"]["Cwnd"] = sender.cwnd
+        if sender.rate != float("inf"):
+            log_data["Extra"]["Send_rate"] = sender.rate
 
         with open(get_true_log_file(), "a") as f:
             f.write(str(log_data)+"\n")
