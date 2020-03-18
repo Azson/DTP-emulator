@@ -73,16 +73,21 @@ class BBR(Reno):
             scale3 = (bws[3] - bws[2]) / bws[2]
         return len(bws) == 4  and scale1 < 0.25 and scale2 < 0.25 and scale3 < 0.25
 
-    #
-    def swto_probe_rtt(self):
-        for time_rtt in self.ten_sec_wnd[1:]:
-            if time_rtt[1] <= self.ten_sec_wnd[0][1]:
-                return False
-        return True
 
-    def update_bw_rtt(self, maxbw, minrtt):
-        self.maxbw = maxbw
-        self.minrtt = minrtt
+    # def swto_probe_rtt(self):
+    #     for time_rtt in self.ten_sec_wnd:
+    #         if time_rtt[1] <= self.minrtt:
+    #             return False
+    #     return True
+
+    def update_min_rtt(self):
+        idx = -1
+        for i, time_rtt in enumerate(self.ten_sec_wnd):
+            if time_rtt[1] < self.minrtt:
+                self.minrtt = time_rtt[1]
+                idx = i
+        self.ten_sec_wnd[:] = self.ten_sec_wnd[idx + 1:]
+        return  True if idx >= 0 else False
 
     def set_output(self, mode):
         pacing_gain, cwnd_gain = self.cal_gain(mode)
@@ -94,6 +99,7 @@ class BBR(Reno):
         if mode == self.bbr_mode[0]:
             pacing_gain = self.bbr_high_gain
             cwnd_gain = self.bbr_high_gain
+
         elif mode == self.bbr_mode[1]:
             pacing_gain = self.bbr_drain_gain
             cwnd_gain = self.bbr_high_gain
@@ -137,36 +143,33 @@ class BBR(Reno):
         rtt = packet["Lantency"]
 
         maxbw, minrtt = float("-inf"), float("inf")
-
         if packet_type == PACKET_TYPE_FINISHED:
             self.delivered_nums += 1
 
             send_delivered = packet["Extra"]["delivered"]
             bw = self.cal_bw(send_delivered, rtt)
 
+            # value of ten_sec_wnd
             time_rtt = [event_time, rtt]
-
             if len(self.ten_sec_wnd) > 1 and \
                     event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec :
-                if self.swto_probe_rtt():
-                   self.mode = self.bbr_mode[3]
-                   self.cwnd = self.bbr_min_cwnd
-                   self.probe_rtt_time = event_time
-                min_time = self.ten_sec_wnd.pop(0)[0]
-                while event_time - min_time >= self.bbr_min_rtt_win_sec:
-                    min_time = self.ten_sec_wnd.pop(0)[0]
-
+                flag = self.update_min_rtt()
+                if not flag:
+                    self.mode = self.bbr_mode[3]
+                    self.cwnd = self.bbr_min_cwnd
+                    self.probe_rtt_time = event_time
             self.ten_sec_wnd.append(time_rtt)
 
-            maxbw = max(maxbw, bw)
-            minrtt = min(minrtt, rtt)
-            self.set_output(self.mode)
+            # find 0 ~ 10s min_rtt
+            if event_time < self.bbr_min_rtt_win_sec:
+                self.minrtt = min(self.minrtt, rtt)
 
+            maxbw = max(maxbw, bw)
+            self.set_output(self.mode)
             self.four_bws[:] = self.four_bws[-3:] + [bw]
             self.bbr_bw_rtts -= 1
-
             if self.bbr_bw_rtts == 0:
-                self.update_bw_rtt(maxbw, minrtt)
+                self.maxbw = maxbw
                 self.bbr_bw_rtts = 10
 
             if self.mode == self.bbr_mode[0]:
