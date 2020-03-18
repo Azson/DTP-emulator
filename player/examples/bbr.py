@@ -53,8 +53,8 @@ class BBR(Reno):
 
         self.send_rate = float("inf")
         self.cwnd = 10
-        # Initialize pacing rate to: high_gain * init_cwnd
-        self.pacing_rate = self.cwnd / 0.002
+        #  high_gain * init_cwnd / RTT
+        self.pacing_rate = self.bbr_high_gain * self.cwnd / 0.002
 
     # calculate rtt and bw on ack
     def cal_bw(self, send_delivered, rtt):
@@ -149,7 +149,7 @@ class BBR(Reno):
                    self.cwnd = self.bbr_min_cwnd
                    self.probe_rtt_time = event_time
                 min_time = self.ten_sec_wnd.pop(0)[0]
-                while time_rtt[0] - min_time >= self.bbr_min_rtt_win_sec:
+                while event_time - min_time >= self.bbr_min_rtt_win_sec:
                     min_time = self.ten_sec_wnd.pop(0)[0]
 
             self.ten_sec_wnd.append(time_rtt)
@@ -158,15 +158,12 @@ class BBR(Reno):
             minrtt = min(minrtt, rtt)
 
             # todo : feel like delivered_nums is always greater than self.delivered
-            # todo : the meaning of sack, the round of rtt
             # todo : the 768 line of bbr source coder
-
             # if self.delivered_nums > self.delivered:
             #     self.delivered = self.delivered_nums
             self.four_bws[:] = self.four_bws[-3:] + [maxbw]
             self.bbr_bw_rtts -= 1
-
-            if self.delivered_nums % 10 == 0 and self.delivered_nums > 0:
+            if self.bbr_bw_rtts == 0:
                 self.update_bw_rtt(maxbw, minrtt)
                 self.set_output(self.mode)
                 self.bbr_bw_rtts = 10
