@@ -98,7 +98,7 @@ class Engine():
                     _packet = sender.new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
                         heapq.heappush(sender.wait_for_push_packets, [event_time, sender, _packet])
-                        if not USE_CWND or sender.cwnd > 1+len(self.q):
+                        if not USE_CWND or int(sender.cwnd) > 1+len(self.q):
                             item = heapq.heappop(sender.wait_for_push_packets)
                             heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \
                                                     item[1], item[2]))
