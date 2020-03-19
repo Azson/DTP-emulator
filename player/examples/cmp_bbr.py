@@ -104,11 +104,11 @@ class BBR(Reno):
         return  True
 
     def set_output(self, mode):
-        pacing_gain, cwnd_gain = self.cal_gain(mode)
+        # pacing_gain, cwnd_gain = self.cal_gain(mode)
         # it seems that there is a minest pacing rate
         # ref : https://code.woboq.org/linux/linux/net/ipv4/tcp_bbr.c.html#259
-        self.pacing_rate = max(pacing_gain * self.maxbw, 1000)
-        self.cwnd = max(self.maxbw * self.minrtt * cwnd_gain, 4)
+        self.pacing_rate = max(self.pacing_gain * self.maxbw, 1000.)
+        self.cwnd = max(self.maxbw * self.minrtt * self.cwnd_gain, 4)
 
     def cal_gain(self, mode):
         pacing_gain, cwnd_gain = 0, 0
@@ -141,9 +141,9 @@ class BBR(Reno):
             "pacing_rate": self.pacing_rate,
             "extra": {
                 "delivered": self.delivered_nums,
-                # "pcing_rate" : self.pacing_rate,
-                # "pacing_gain" : self.pacing_gain,
-                # "cwnd_gain" : self.cwnd_gain,
+                "pcing_rate" : self.pacing_rate,
+                "pacing_gain" : self.pacing_gain,
+                "cwnd_gain" : self.cwnd_gain,
                 # "max_bw" : self.maxbw,
                 # "min_rtt" : self.minrtt
             }
@@ -162,33 +162,18 @@ class BBR(Reno):
             self.delivered_nums += 1
 
             send_delivered = packet["Extra"]["delivered"]
+            # update bandwidth
             bw = self.cal_bw(send_delivered, rtt)
-            # if is the first
-            if self.maxbw == float("inf"):
-                self.maxbw = bw
-                self.minrtt = rtt
-            # for RTT
-            # value of ten_sec_wnd
-            time_rtt = [event_time, rtt]
-            self.ten_sec_wnd.append(time_rtt)
-            # rtt window exceed
-            if event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec :
-                flag = self.update_min_rtt(event_time)
-                # now rtt is not the minest, so enter prob_rtt
-                if not flag:
-                    self.mode = self.bbr_mode[3]
-                    self.cwnd = self.bbr_min_cwnd
-            # find new min rtt in bbr_min_rtt_win_sec
-            elif rtt > self.ten_sec_wnd[0][1]:
-                self.minrtt = rtt
-                self.ten_sec_wnd = self.ten_sec_wnd[-1:]
-
             self.append_bw(bw)
             self.four_bws = self.bw_windows[-4:]
             self.bbr_bw_rtts -= 1
             if self.bbr_bw_rtts == 0:
                 self.maxbw = self.get_max_bw()
                 self.bbr_bw_rtts = 10
+            # if is the first
+            if self.maxbw == float("inf"):
+                self.maxbw = bw
+                self.minrtt = rtt
 
             if self.mode == self.bbr_mode[0]:
                 if self.stop_increasing(self.four_bws):
@@ -209,8 +194,22 @@ class BBR(Reno):
                         self.cycle_index = 1
                     else:
                         self.mode = self.bbr_mode[0]
-
+            # update RTT
+            # value of ten_sec_wnd
+            time_rtt = [event_time, rtt]
+            self.ten_sec_wnd.append(time_rtt)
+            # rtt window exceed
+            if event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec:
+                flag = self.update_min_rtt(event_time)
+                # now rtt is not the minest, so enter prob_rtt
+                if not flag:
+                    self.mode = self.bbr_mode[3]
+                    self.cwnd = self.bbr_min_cwnd
+            # find new min rtt in bbr_min_rtt_win_sec
+            elif rtt > self.ten_sec_wnd[0][1]:
+                self.minrtt = rtt
+                self.ten_sec_wnd = self.ten_sec_wnd[-1:]
+            # update gains
+            self.pacing_rate, self.cwnd_gain = self.cal_gain(self.mode)
             # when we should calculate pacing and cwnd ?
             self.set_output(self.mode)
-
-
