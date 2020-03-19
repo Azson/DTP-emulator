@@ -41,7 +41,7 @@ class BBR(Reno):
         self.cwnd_gain = self.bbr_high_gain
 
         # to check when the mode come to drain
-        self.four_bws = [0] * 4
+        self.four_bws = []
 
         # the start time of probe rtt
         self.probe_rtt_time = 0
@@ -168,10 +168,11 @@ class BBR(Reno):
             # update bandwidth
             bw = self.cal_bw(send_delivered, rtt)
             self.append_bw(bw)
-            self.four_bws = self.bw_windows[-4:]
+
             self.bbr_bw_rtts -= 1
             if self.bbr_bw_rtts == 0:
                 self.maxbw = self.get_max_bw()
+                self.four_bws = self.four_bws[-3:] + [self.maxbw]
                 self.bbr_bw_rtts = 10
             # if is the first
             if self.maxbw == float("-inf"):
@@ -190,6 +191,7 @@ class BBR(Reno):
                     self.cycle_index = 0
 
             if self.mode == self.bbr_mode[3]:
+                self.cwnd = self.bbr_min_cwnd
                 if event_time - self.probe_rtt_time >= self.bbr_probe_rtt_mode_s:
                     if self.stop_increasing(self.four_bws):
                         self.mode = self.bbr_mode[2]
