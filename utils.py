@@ -325,10 +325,11 @@ def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatt
         # used_time = (item["Time"] - item["Create_time"] - item["Send_delay"] - item["Pacing_delay"])
         used_time = item["Lantency"]
         data_throughput.append((idx+1-item["Extra"]["delivered"]) / used_time)
-        data_bdp.append(item["Extra"]["max_bw"] * item["Extra"]["min_rtt"] if item["Extra"]["max_bw"] is item["Extra"]["max_bw"] == float("-inf") else 0)
+        data_bdp.append(item["Extra"]["max_bw"] * item["Extra"]["min_rtt"] if item["Extra"]["max_bw"] != float("-inf") else 0)
         data_inflight.append(item["Waiting_for_ack_nums"])
     # print(data_time)
     # print(data_throughput)
+    # print(data_bdp)
 
     pic = plt.figure(figsize=(50, 30 * pic_nums))
     # plot cwnd changing
@@ -358,6 +359,6 @@ if __name__ == '__main__':
     log_packet_file = "output/packet_log/packet-0.log"
     trace_file = "config/trace.txt"
     new_trace_file = "scripts/first_group/traces_1.txt"
-    analyze_pcc_emulator(log_packet_file, time_range=None, scatter=False, trace_file=new_trace_file, file_range="all")
-    plot_cwnd(log_packet_file, None, trace_file=new_trace_file, time_range=None, scatter=False, file_range="all")
-    # plot_throughput(log_packet_file, file_range="all", scatter=False)
+    # analyze_pcc_emulator(log_packet_file, time_range=None, scatter=False, trace_file=new_trace_file, file_range="all")
+    # plot_cwnd(log_packet_file, None, trace_file=new_trace_file, time_range=None, scatter=False, file_range="all")
+    plot_throughput(log_packet_file, file_range="all", scatter=False)
