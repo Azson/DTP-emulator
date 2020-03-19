@@ -1,4 +1,4 @@
-import heapq, random
+import heapq, random, json
 from config.constant import *
 from utils import get_packet_type, get_emulator_info, debug_print
 
@@ -71,7 +71,7 @@ class Engine():
                         # print("Packet acked at time %f" % self.cur_time)
                     # for windows-based cc
                     if USE_CWND:
-                        for _packet in sender.slide_windows(self.cur_time):
+                        for _packet in sender.slide_windows(self.cur_time, len(self.q)):
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
 
@@ -98,7 +98,7 @@ class Engine():
                     _packet = sender.new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
                         heapq.heappush(sender.wait_for_push_packets, [event_time, sender, _packet])
-                        if not USE_CWND or sender.cwnd > sender.get_waiting_ack_nums():
+                        if not USE_CWND or int(sender.cwnd) > 1+len(self.q):
                             item = heapq.heappop(sender.wait_for_push_packets)
                             heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \
                                                     item[1], item[2]))
@@ -158,7 +158,7 @@ class Engine():
         '''
 
         def get_true_log_file():
-            if MAX_PACKET_LOG_ROWS:
+            if isinstance(MAX_PACKET_LOG_ROWS, int) and MAX_PACKET_LOG_ROWS > 0:
                 file_nums = self.log_items // MAX_PACKET_LOG_ROWS
                 if self.log_items and self.log_items % MAX_PACKET_LOG_ROWS == 0:
                     self.fir_log = True
@@ -187,7 +187,13 @@ class Engine():
             log_data["Extra"]["Send_rate"] = sender.rate
 
         with open(get_true_log_file(), "a") as f:
-            f.write(str(log_data)+"\n")
+            # can't serialize int64, where did it got?
+            for k, v in log_data.items():
+                if isinstance(v, dict) or isinstance(v, str):
+                    continue
+                if int(v) == log_data[k]:
+                    log_data[k] = int(v)
+            f.write(json.dumps(log_data, ensure_ascii = False)+"\n")
         self.log_items += 1
         return packet
 
