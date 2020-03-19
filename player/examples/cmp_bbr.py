@@ -20,7 +20,7 @@ class BBR(Reno):
         self.bbr_bw_rtts = 10
 
         # Window length of min_rtt filter (in sec)
-        self.bbr_min_rtt_win_sec = 10
+        self.bbr_min_rtt_win_sec = 5
 
         # Minimum time (in s) spent at bbr_cwnd_min_target in BBR_PROBE_RTT mode
         self.bbr_probe_rtt_mode_s = 0.2
@@ -74,10 +74,11 @@ class BBR(Reno):
     def stop_increasing(self, bws):
         if len(bws) < 4:
             return False
+        thresh = 0.1
         scale1 = (bws[1] - bws[0]) / bws[0]
         scale2 = (bws[2] - bws[1]) / bws[1]
         scale3 = (bws[3] - bws[2]) / bws[2]
-        return scale1 < 0.25 and scale2 < 0.25 and scale3 < 0.25
+        return scale1 < thresh and scale2 < thresh and scale3 < thresh
 
     # def swto_probe_rtt(self):
     #     for time_rtt in self.ten_sec_wnd:
@@ -126,7 +127,7 @@ class BBR(Reno):
             cwnd_gain = self.bbr_cwnd_gain
             self.cycle_index += 1
             if self.cycle_index == len(self.probe_bw_gain):
-                self.cycle_index = 0
+                self.cycle_index = 1
 
         elif mode == self.bbr_mode[3]:
             pacing_gain = 1
@@ -145,8 +146,9 @@ class BBR(Reno):
                 "pcing_rate" : self.pacing_rate,
                 "pacing_gain" : self.pacing_gain,
                 "cwnd_gain" : self.cwnd_gain,
-                # "max_bw" : self.maxbw,
-                # "min_rtt" : self.minrtt
+                "max_bw" : self.maxbw,
+                "min_rtt" : self.minrtt,
+                "mode" : self.mode
             }
         }
 
@@ -189,7 +191,6 @@ class BBR(Reno):
 
             if self.mode == self.bbr_mode[3]:
                 if event_time - self.probe_rtt_time >= self.bbr_probe_rtt_mode_s:
-                    self.probe_rtt_time = event_time
                     if self.stop_increasing(self.four_bws):
                         self.mode = self.bbr_mode[2]
                         self.cycle_index = 1
@@ -206,6 +207,7 @@ class BBR(Reno):
                 if not flag:
                     self.mode = self.bbr_mode[3]
                     self.cwnd = self.bbr_min_cwnd
+                    self.probe_rtt_time = event_time
             # find new min rtt in bbr_min_rtt_win_sec
             elif rtt < self.ten_sec_wnd[0][1]:
                 self.minrtt = rtt
