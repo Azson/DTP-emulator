@@ -19,13 +19,15 @@ def get_ms_time(rate=1000):
     return time.time()*rate
 
 
-def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, scatter=False):
+def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, scatter=False, file_range=None):
 
     plt_data = []
-
-    with open(log_file, "r") as f:
-        for line in f.readlines():
-            plt_data.append(json.loads(line.replace("'", '"')))
+    if file_range:
+        plt_data = compose_packet_logs(file_range)
+    else:
+        with open(log_file, 'r') as f:
+            for line in f.readlines():
+                plt_data.append(json.loads(line.replace("'", '"')))
 
     plt_data = list(filter(lambda x:x["Type"]=='A' and x["Position"] == 2, plt_data))
     if time_range:
@@ -172,14 +174,35 @@ def time_filter(data, time_range):
     return data
 
 
-def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=False):
+def compose_packet_logs(file_range, pattern=None):
+    if pattern is None:
+        pattern = "output/packet_log/packet-0.log"
+    compose_data = []
+    if file_range == "all":
+        # Suppose maximum numbers of file is 1000
+        file_range = [1000]
+    try:
+        for idx in range(*file_range):
+            with open(pattern.replace("0", str(idx)), 'r') as f:
+                for line in f.readlines():
+                    compose_data.append(json.loads(line.replace("'", '"')))
+    except Exception as e:
+        print("Log file ended at {}".format(idx))
+    finally:
+        return compose_data
+
+
+def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None):
     if not USE_CWND:
         print("Your congestion control don't use windows~")
         return
     plt_data = []
-    with open(log_file, "r") as f:
-        for line in f.readlines():
-            plt_data.append(json.loads(line.replace("'", '"')))
+    if file_range:
+        plt_data = compose_packet_logs(file_range)
+    else:
+        with open(log_file, 'r') as f:
+            for line in f.readlines():
+                plt_data.append(json.loads(line.replace("'", '"')))
     # filter the packet at sender
     plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0, plt_data))
     # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
