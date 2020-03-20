@@ -104,7 +104,7 @@ class BBR(Reno):
         self.ten_sec_wnd = self.ten_sec_wnd[idx:]
         return  True
 
-    def set_output(self, mode):
+    def set_output(self):
         # pacing_gain, cwnd_gain = self.cal_gain(mode)
         # it seems that there is a minest pacing rate
         # ref : https://code.woboq.org/linux/linux/net/ipv4/tcp_bbr.c.html#259
@@ -148,7 +148,8 @@ class BBR(Reno):
                 "cwnd_gain" : self.cwnd_gain,
                 "max_bw" : self.maxbw,
                 "min_rtt" : self.minrtt,
-                "mode" : self.mode
+                "mode" : self.mode,
+                "start_probe_rtt_time" : self.probe_rtt_time
             }
         }
 
@@ -168,11 +169,10 @@ class BBR(Reno):
             # update bandwidth
             bw = self.cal_bw(send_delivered, rtt)
             self.append_bw(bw)
-
+            self.four_bws = self.bw_windows[-4:]
             self.bbr_bw_rtts -= 1
             if self.bbr_bw_rtts == 0:
                 self.maxbw = self.get_max_bw()
-                self.four_bws = self.four_bws[-3:] + [self.maxbw]
                 self.bbr_bw_rtts = 10
             # if is the first
             if self.maxbw == float("-inf"):
@@ -206,7 +206,7 @@ class BBR(Reno):
             if event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec:
                 flag = self.update_min_rtt(event_time)
                 # now rtt is not the minest, so enter prob_rtt
-                if not flag:
+                if (not flag) and self.mode != self.bbr_mode[3]:
                     self.mode = self.bbr_mode[3]
                     self.cwnd = self.bbr_min_cwnd
                     self.probe_rtt_time = event_time
@@ -217,5 +217,5 @@ class BBR(Reno):
             # update gains
             self.pacing_rate, self.cwnd_gain = self.cal_gain(self.mode)
             # when we should calculate pacing and cwnd ?
-            self.set_output(self.mode)
+            self.set_output()
             # print(self.cwnd, self.cwnd_gain, self.pacing_rate, self.pacing_gain)
