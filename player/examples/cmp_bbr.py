@@ -159,7 +159,7 @@ class BBR(Reno):
         packet_type = data["packet_type"]
         event_time = data["event_time"]
         packet = data["packet"]
-        rtt = packet["Lantency"]
+        rtt = packet["Lantency"] + packet["Pacing_delay"]
 
         if packet_type == PACKET_TYPE_FINISHED:
             self.delivered_nums += 1
