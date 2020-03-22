@@ -8,7 +8,7 @@ class Sender(Super_sender):
         ret = []
         for i in range(int(self.cwnd) - queue_size):
             if len(self.wait_for_push_packets) == 0:
-                _packet = self.new_packet(cur_time + (1.0 / self.rate))
+                _packet = self.select_packet(cur_time + (1.0 / self.rate))
                 if _packet is None:
                     return ret
             else:

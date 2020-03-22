@@ -1,4 +1,4 @@
-import json, random
+import json, random, os, inspect
 import numpy as np
 
 from utils import (
@@ -8,8 +8,7 @@ from objects.windows_based_sender import Sender as W_sender
 from objects.link import Link
 from objects.engine import Engine
 
-from player import congestion_control_algorithm
-from player.examples.bbr import BBR
+from player.aitrans_solution import Solution as Aitrans_solution
 
 
 class PccEmulator(object):
@@ -34,7 +33,11 @@ class PccEmulator(object):
         self.senders = None
         self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
-
+        # todo : clear log file in windows or linux
+        # currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        # print(currentdir+"\\..output\\packet_log")
+        # os.system("rm -rf %s" % (currentdir+"\\..\\output\\packet_log"))
+        # os.system("mkdir %s" % (currentdir+"\\..\\output\\packet_log"))
 
     def get_trace(self):
 
@@ -64,8 +67,7 @@ class PccEmulator(object):
         self.links = [Link(self.trace_list, queue) , Link([], queue)]
         #self.senders = [Sender(0.3 * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         #self.senders = [Sender(random.uniform(0.2, 0.7) * bw, [self.links[0], self.links[1]], 0, self.history_len)]
-        solution = congestion_control_algorithm.Solution()
-        # solution = BBR()
+        solution = Aitrans_solution()
         self.senders = [W_sender(self.links, 0, self.features,
                                history_len=self.history_len, solution=solution)]
         for item in self.senders:

@@ -1,7 +1,6 @@
 from objects.block import Block
 from objects.packet import Packet
 import numpy as np
-from player import block_selection
 import pandas as pd
 from utils import debug_print
 
@@ -30,8 +29,6 @@ class Appication_Layer(object):
         self.handle_block(block_file)
         self.ack_blocks = dict()
         self.blocks_status = dict()
-        self.block_selection = block_selection.Solution()
-
 
     def handle_block(self, block_file):
         if isinstance(block_file, str):
@@ -41,7 +38,6 @@ class Appication_Layer(object):
                 self.create_blok_by_csv(single_file)
             else:
                 self.create_block_by_file(single_file, self.create_det)
-
 
     def create_blok_by_csv(self, csv_file):
         df_data = pd.read_csv(csv_file, header=None)
@@ -57,7 +53,6 @@ class Appication_Layer(object):
                           deadline=0.2,
                           timestamp=df_data["time"][idx])
             self.block_queue.append(block)
-
 
     def create_block_by_file(self, block_file, det=0.1):
         with open(block_file, "r") as f:
@@ -79,12 +74,32 @@ class Appication_Layer(object):
                               priority=pattern[ch]["type"])
                 self.block_queue.append(block)
 
+    def select_algorithm(self, cur_time, block_queue):
+        '''
+        The alogrithm to select the block which will be sended in next.
+        The following example is selecting block by the radio of rest life time to deadline.
+        :param cur_time: float
+        :param block_queue: the list of Block.You can get more detail about Block in objects/blocks.py
+        :return: int
+        '''
+        def is_better(block):
+            return (cur_time - block.timestamp) * best_block.deadline > \
+                    (cur_time - best_block.timestamp) * block.deadline
+
+        best_block_idx = -1
+        best_block = None
+        for idx, item in enumerate(block_queue):
+            if best_block is None or is_better(item) :
+                best_block_idx = idx
+                best_block = item
+
+        return best_block_idx
 
     def select_block(self):
 
         cur_time = self.init_time + self.pass_time
         # call player's code
-        best_block_idx = self.block_selection.select_block(cur_time, self.block_queue)
+        best_block_idx = self.select_algorithm(cur_time, self.block_queue)
         if best_block_idx == -1:
             return None
         best_block = self.block_queue[best_block_idx]
@@ -101,7 +116,7 @@ class Appication_Layer(object):
 
         return best_block
 
-    def get_next_packet(self, cur_time):
+    def get_next_packet(self, cur_time, mode=None):
         self.pass_time = cur_time
         if self.now_block is None or self.now_block_offset == self.now_block.split_nums:
             self.now_block = self.select_block()
@@ -112,6 +127,10 @@ class Appication_Layer(object):
                                             (self.bytes_per_packet - self.head_per_packet)))
             self.blocks_status[self.now_block.block_id] = self.now_block
 
+        # It will only send the packet that already created if mode is None;
+        # else will update system time
+        if mode != "force" and cur_time < self.now_block.timestamp:
+            return None
         payload = self.bytes_per_packet - self.head_per_packet
         if self.now_block.size % (self.bytes_per_packet - self.head_per_packet) and \
                 self.now_block_offset == self.now_block.split_nums - 1:
@@ -127,7 +146,6 @@ class Appication_Layer(object):
         self.now_block_offset += 1
 
         return packet
-
 
     def update_block_status(self, packet):
         # filter repeating acked packet
@@ -150,7 +168,6 @@ class Appication_Layer(object):
         if self.is_sended_block(packet.block_id):
             self.log_block(self.blocks_status[packet.block_id])
 
-
     def log_block(self, block):
 
         if self.fir_log:
@@ -168,13 +185,11 @@ class Appication_Layer(object):
         with open("output/block.log", "a") as f:
             f.write(str(block)+'\n')
 
-
     def is_sended_block(self, block_id):
         if block_id in self.ack_blocks and \
                 len(self.ack_blocks[block_id]) == self.blocks_status[block_id].split_nums:
             return True
         return False
-
 
     def close(self):
         for block_id, packet_list in self.ack_blocks.items():

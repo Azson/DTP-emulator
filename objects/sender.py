@@ -2,6 +2,7 @@ from config.constant import *
 from common import sender_obs
 from utils import check_solution_format
 from objects.application import Appication_Layer
+from copy import deepcopy
 
 
 class Sender():
@@ -33,8 +34,11 @@ class Sender():
         self.cur_time = 0
 
         self.application = None
+        # for cut the packet numbers that can't be sended due to cwnd in log
         self.wait_for_push_packets = []
         self.extra = {}
+        # for player
+        self.wait_for_select_packets = []
 
     _next_id = 1
 
@@ -47,12 +51,26 @@ class Sender():
     def init_application(self, block_file):
         self.application = Appication_Layer(block_file, bytes_per_packet=BYTES_PER_PACKET)
 
-    def new_packet(self, cur_time):
-        packet = self.application.get_next_packet(cur_time)
+    def new_packet(self, cur_time, mode):
+        packet = self.application.get_next_packet(cur_time, mode)
         if packet:
             packet.send_delay = 1 / self.rate
 
         return packet
+
+    def select_packet(self, cur_time):
+        while True:
+            # if there is no packet can be sended, we need to send packet that created after cur_time
+            packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) == 0 else None)
+            if not packet:
+                break
+            self.wait_for_select_packets.append(packet)
+        # print("wait for select %d, already send %d" % (len(self.wait_for_select_packets), self.sent))
+        # use deepcopy for safety, but may cause bad performance on system
+        packet_idx = self.solution.select_packet(cur_time, self.wait_for_select_packets)
+        if isinstance(packet_idx, int) and packet_idx >= 0:
+            return self.wait_for_select_packets.pop(packet_idx)
+        return None
 
     def apply_rate_delta(self, delta):
         delta *= DELTA_SCALE
