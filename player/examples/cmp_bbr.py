@@ -109,11 +109,10 @@ class BBR(Reno):
         # it seems that there is a minest pacing rate
         # ref : https://code.woboq.org/linux/linux/net/ipv4/tcp_bbr.c.html#259
         # print(self.maxbw, self.minrtt)
-        self.pacing_rate = max(self.pacing_gain * self.maxbw, 1000.)
+        self.pacing_rate = self.pacing_gain * self.maxbw
         self.cwnd = max(self.maxbw * self.minrtt * self.cwnd_gain, 4)
 
     def cal_gain(self, mode):
-        pacing_gain, cwnd_gain = 0, 0
         if mode == self.bbr_mode[0]:
             pacing_gain = self.bbr_high_gain
             cwnd_gain = self.bbr_high_gain
@@ -167,16 +166,17 @@ class BBR(Reno):
             send_delivered = packet["Extra"]["delivered"]
             # update bandwidth
             bw = self.cal_bw(send_delivered, rtt)
-            self.append_bw(bw)
-            self.four_bws = self.bw_windows[-4:]
-            self.bbr_bw_rtts -= 1
-            if self.bbr_bw_rtts == 0:
-                self.maxbw = self.get_max_bw()
-                self.bbr_bw_rtts = 10
-            # if is the first
+            # if is the first ack
             if self.maxbw == float("-inf"):
                 self.maxbw = bw
                 self.minrtt = rtt
+            self.append_bw(bw)
+            self.four_bws = self.bw_windows[-4:]
+            self.maxbw = self.get_max_bw()
+            # self.bbr_bw_rtts -= 1
+            # if self.bbr_bw_rtts == 0:
+            #     self.maxbw = self.get_max_bw()
+            #     self.bbr_bw_rtts = 10
 
             if self.mode == self.bbr_mode[0]:
                 if self.stop_increasing(self.four_bws):
@@ -213,7 +213,7 @@ class BBR(Reno):
                 self.minrtt = rtt
                 self.ten_sec_wnd = self.ten_sec_wnd[-1:]
             # update gains
-            self.pacing_rate, self.cwnd_gain = self.cal_gain(self.mode)
+            self.pacing_gain, self.cwnd_gain = self.cal_gain(self.mode)
             # when we should calculate pacing and cwnd ?
             self.set_output(self.mode)
             # print(self.cwnd, self.cwnd_gain, self.pacing_rate, self.pacing_gain)

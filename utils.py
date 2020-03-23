@@ -187,7 +187,7 @@ def compose_packet_logs(file_range, pattern=None):
                 for line in f.readlines():
                     compose_data.append(json.loads(line.replace("'", '"')))
     except Exception as e:
-        print("Log file ended at {}".format(idx))
+        debug_print("Log file ended at {}".format(idx))
     finally:
         return compose_data
 
