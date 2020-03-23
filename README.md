@@ -210,7 +210,9 @@ We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also c
 
 ![emulator-analysis](output/pcc_emulator-analysis.png)
 
+### throughput_changing.png
 
+![throughput_changing](output/throughput_changing.png)
 
 # Todo list
 

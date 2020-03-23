@@ -9,7 +9,7 @@
 '''
 
 from objects.pcc_emulator import PccEmulator
-from utils import analyze_pcc_emulator, plot_cwnd
+from utils import analyze_pcc_emulator, plot_cwnd, plot_throughput
 import os, sys, inspect
 from config.constant import *
 
@@ -39,5 +39,6 @@ if __name__ == '__main__':
     emulator.print_debug()
     print(emulator.senders[0].rtt_samples)
     print(emulator.senders[0].application.ack_blocks)
-    analyze_pcc_emulator(log_packet_file)
-    plot_cwnd(log_packet_file, trace_file=new_trace_file)
+    analyze_pcc_emulator(log_packet_file, file_range="all")
+    plot_cwnd(log_packet_file, trace_file=trace_file, file_range="all")
+    # plot_throughput(log_packet_file, trace_file=trace_file, file_range="all")

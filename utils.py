@@ -187,7 +187,7 @@ def compose_packet_logs(file_range, pattern=None):
                 for line in f.readlines():
                     compose_data.append(json.loads(line.replace("'", '"')))
     except Exception as e:
-        print("Log file ended at {}".format(idx))
+        debug_print("Log file ended at {}".format(idx))
     finally:
         return compose_data
 
@@ -290,10 +290,75 @@ def plot_trace(data_time, ax, font_size, tick_size, trace_file):
     plt.legend(fontsize=font_size)
 
 
+def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None):
+    plt_data = []
+    if file_range:
+        plt_data = compose_packet_logs(file_range)
+    else:
+        with open(log_file, 'r') as f:
+            for line in f.readlines():
+                plt_data.append(json.loads(line.replace("'", '"')))
+    # filter the packet at receiver
+    plt_data = list(filter(lambda x: x["Type"] == 'A' and x["Position"] == 1 and x["Drop"] == 0, plt_data))
+    # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
+    # filter by the time
+    if time_range:
+        plt_data = time_filter(plt_data, time_range)
+    # plot "rows" counts data
+    if isinstance(rows, int):
+        plt_data = plt_data[:rows]
+
+    pic_nums = 1
+    font_size = 50
+    tick_size = 50
+
+    data_time = []
+    data_throughput = []
+    data_bdp = []
+    data_inflight = []
+    for idx, item in enumerate(plt_data):
+        if "delivered" not in item["Extra"]:
+            continue
+        if idx and item["Time"] < data_time[-1]:
+            print("error order!")
+        data_time.append(item["Time"])
+        # used_time = (item["Time"] - item["Create_time"] - item["Send_delay"] - item["Pacing_delay"])
+        used_time = item["Lantency"]
+        data_throughput.append((idx+1-item["Extra"]["delivered"]) / used_time)
+        data_bdp.append(item["Extra"]["max_bw"] * item["Extra"]["min_rtt"] if item["Extra"]["max_bw"] != float("-inf") else 0)
+        data_inflight.append(item["Waiting_for_ack_nums"])
+    # print(data_time)
+    # print(data_throughput)
+    # print(data_bdp)
+
+    pic = plt.figure(figsize=(50, 30 * pic_nums))
+    # plot cwnd changing
+    ax = plt.subplot(pic_nums, 1, 1)
+    if scatter:
+        # ax.scatter(data_time, data_throughput, label="Throughput", c='g', s=200)
+        ax.scatter(data_time, data_bdp, label="BDP", c='y', s=200)
+        ax.scatter(data_time, data_inflight, label="Inflight", c='r', s=200)
+    else:
+        # ax.plot(data_time, data_throughput, label="Throughput", c='g')
+        ax.plot(data_time, data_bdp, label="BDP", c='y')
+        ax.plot(data_time, data_inflight, label="Inflight", c='r')
+    ax.set_ylabel("Packet Numbers", fontsize=font_size)
+    ax.set_xlabel("Time / s", fontsize=font_size)
+    plt.tick_params(labelsize=tick_size)
+    plt.legend(fontsize=font_size)
+
+    # plot bandwith
+    if trace_file:
+        plot_trace(data_time, ax, font_size, tick_size, trace_file)
+
+    plt.savefig("output/throughput_changing.png")
+
 
 if __name__ == '__main__':
 
     log_packet_file = "output/packet_log/packet-0.log"
-    trace_file = "scripts/first_group/traces_1.txt"
-    analyze_pcc_emulator(log_packet_file, time_range=None, scatter=False, trace_file=trace_file)
-    # plot_cwnd(log_packet_file, None, trace_file=trace_file, time_range=[0, 1], scatter=False)
+    trace_file = "config/trace.txt"
+    new_trace_file = "scripts/first_group/traces_1.txt"
+    # analyze_pcc_emulator(log_packet_file, time_range=None, scatter=False, trace_file=new_trace_file, file_range="all")
+    # plot_cwnd(log_packet_file, None, trace_file=new_trace_file, time_range=None, scatter=False, file_range="all")
+    plot_throughput(log_packet_file, file_range="all", scatter=False)

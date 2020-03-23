@@ -41,7 +41,11 @@ class BBR(Reno):
         self.cwnd_gain = self.bbr_high_gain
 
         # to check when the mode come to drain
+
         self.four_bws = []
+
+        self.four_bws = [0] * 4
+
 
         # the start time of probe rtt
         self.probe_rtt_time = 0
@@ -104,16 +108,24 @@ class BBR(Reno):
         self.ten_sec_wnd = self.ten_sec_wnd[idx:]
         return  True
 
-    def set_output(self):
+    def set_output(self, mode):
+
         # pacing_gain, cwnd_gain = self.cal_gain(mode)
         # it seems that there is a minest pacing rate
         # ref : https://code.woboq.org/linux/linux/net/ipv4/tcp_bbr.c.html#259
         # print(self.maxbw, self.minrtt)
+
         self.pacing_rate = max(self.pacing_gain * self.maxbw, 1000.)
         self.cwnd = max(self.maxbw * self.minrtt * self.cwnd_gain, 4)
 
     def cal_gain(self, mode):
         pacing_gain, cwnd_gain = 0, 0
+
+        self.pacing_rate = self.pacing_gain * self.maxbw
+        self.cwnd = max(self.maxbw * self.minrtt * self.cwnd_gain, 4)
+
+    def cal_gain(self, mode):
+
         if mode == self.bbr_mode[0]:
             pacing_gain = self.bbr_high_gain
             cwnd_gain = self.bbr_high_gain
@@ -148,8 +160,12 @@ class BBR(Reno):
                 "cwnd_gain" : self.cwnd_gain,
                 "max_bw" : self.maxbw,
                 "min_rtt" : self.minrtt,
+
                 "mode" : self.mode,
-                "start_probe_rtt_time" : self.probe_rtt_time
+                "start_probe_rtt_time" : self.probe_rtt_time,
+
+                "mode" : self.mode
+
             }
         }
 
@@ -160,7 +176,11 @@ class BBR(Reno):
         packet_type = data["packet_type"]
         event_time = data["event_time"]
         packet = data["packet"]
+
         rtt = packet["Lantency"]
+
+        rtt = packet["Lantency"] + packet["Pacing_delay"]
+
 
         if packet_type == PACKET_TYPE_FINISHED:
             self.delivered_nums += 1
@@ -168,6 +188,7 @@ class BBR(Reno):
             send_delivered = packet["Extra"]["delivered"]
             # update bandwidth
             bw = self.cal_bw(send_delivered, rtt)
+
             self.append_bw(bw)
             self.four_bws = self.bw_windows[-4:]
             self.bbr_bw_rtts -= 1
@@ -178,6 +199,19 @@ class BBR(Reno):
             if self.maxbw == float("-inf"):
                 self.maxbw = bw
                 self.minrtt = rtt
+
+            # if is the first ack
+            if self.maxbw == float("-inf"):
+                self.maxbw = bw
+                self.minrtt = rtt
+            self.append_bw(bw)
+            self.four_bws = self.bw_windows[-4:]
+            self.maxbw = self.get_max_bw()
+            # self.bbr_bw_rtts -= 1
+            # if self.bbr_bw_rtts == 0:
+            #     self.maxbw = self.get_max_bw()
+            #     self.bbr_bw_rtts = 10
+
 
             if self.mode == self.bbr_mode[0]:
                 if self.stop_increasing(self.four_bws):
@@ -191,7 +225,9 @@ class BBR(Reno):
                     self.cycle_index = 0
 
             if self.mode == self.bbr_mode[3]:
+
                 self.cwnd = self.bbr_min_cwnd
+
                 if event_time - self.probe_rtt_time >= self.bbr_probe_rtt_mode_s:
                     if self.stop_increasing(self.four_bws):
                         self.mode = self.bbr_mode[2]
@@ -206,7 +242,9 @@ class BBR(Reno):
             if event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec:
                 flag = self.update_min_rtt(event_time)
                 # now rtt is not the minest, so enter prob_rtt
+
                 if (not flag) and self.mode != self.bbr_mode[3]:
+
                     self.mode = self.bbr_mode[3]
                     self.cwnd = self.bbr_min_cwnd
                     self.probe_rtt_time = event_time
@@ -215,7 +253,14 @@ class BBR(Reno):
                 self.minrtt = rtt
                 self.ten_sec_wnd = self.ten_sec_wnd[-1:]
             # update gains
+
             self.pacing_rate, self.cwnd_gain = self.cal_gain(self.mode)
             # when we should calculate pacing and cwnd ?
             self.set_output()
             # print(self.cwnd, self.cwnd_gain, self.pacing_rate, self.pacing_gain)
+
+            self.pacing_gain, self.cwnd_gain = self.cal_gain(self.mode)
+            # when we should calculate pacing and cwnd ?
+            self.set_output(self.mode)
+            # print(self.cwnd, self.cwnd_gain, self.pacing_rate, self.pacing_gain)
+

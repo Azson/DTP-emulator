@@ -21,7 +21,7 @@ class Engine():
         for sender in self.senders:
             sender.register_network(self)
             sender.reset_obs()
-            packet = sender.new_packet(1.0 / sender.rate)
+            packet = sender.select_packet(1.0 / sender.rate) # sender.new_packet(1.0 / sender.rate)
             if packet:
                 heapq.heappush(self.q, (1.0 / sender.rate, sender, packet))
 
@@ -95,7 +95,7 @@ class Engine():
                     else:
                         sender.wait_for_push_packets.append([event_time, sender, packet])
                     # when do the packet create ? before or after pacing ?
-                    _packet = sender.new_packet(new_event_time + (1.0 / sender.rate))
+                    _packet = sender.select_packet(new_event_time + (1.0 / sender.rate)) # new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
                         heapq.heappush(sender.wait_for_push_packets, [event_time, sender, _packet])
                         if not USE_CWND or int(sender.cwnd) > 1+len(self.q):
