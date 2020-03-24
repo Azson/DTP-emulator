@@ -55,7 +55,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
                 data_finish_time.append(item["Time"])
                 data_sum_time.append(item["Send_delay"] + item["Lantency"])
 
-            if item["Deadline"] < data_sum_time[-1]:
+            if item["Block_info"]["Deadline"] < data_sum_time[-1]:
                 data_miss_ddl.append(idx)
 
     pic = plt.figure(figsize=(50, 30 * pic_nums))

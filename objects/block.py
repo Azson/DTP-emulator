@@ -26,18 +26,24 @@ class Block(object):
         self.split_nums = -1
         self.finished_bytes = 0
 
-
     @classmethod
     def get_next_block_id(cls):
         ret = cls._block_id
         cls._block_id += 1
         return ret
 
-
     def get_cost_time(self):
 
         return self.send_delay + self.latency
 
+    def get_block_info(self):
+        return {
+            "Block_id" : self.block_id,
+            "Priority" : self.priority,
+            "Deadline" : self.deadline,
+            "Create_time" : self.timestamp,
+            "Size" : self.size
+        }
 
     def __str__(self):
 
