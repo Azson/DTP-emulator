@@ -200,9 +200,6 @@ class BBR(Reno):
             # rtt window exceed
             if event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec:
                 flag = self.update_min_rtt(event_time)
-                # flag 一直是false
-                print(flag, self.probe_rtt_time)
-
                 # now rtt is not the minest, so enter prob_rtt
                 if (not flag) and self.mode != self.bbr_mode[3]:
                     self.mode = self.bbr_mode[3]
