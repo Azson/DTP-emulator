@@ -40,5 +40,5 @@ if __name__ == '__main__':
     print(emulator.senders[0].rtt_samples)
     print(emulator.senders[0].application.ack_blocks)
     analyze_pcc_emulator(log_packet_file, file_range="all")
-    plot_cwnd(log_packet_file, trace_file=trace_file, file_range="all")
+    plot_cwnd(log_packet_file, trace_file=new_trace_file, file_range="all")
     # plot_throughput(log_packet_file, trace_file=trace_file, file_range="all")

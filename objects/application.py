@@ -105,7 +105,7 @@ class Appication_Layer(object):
         best_block = self.block_queue[best_block_idx]
 
         self.block_queue.pop(best_block_idx)
-        # filter block with missing ddl
+        # Is it necessary ? filter block with missing ddl
         for idx in range(len(self.block_queue)-1, -1, -1):
             item = self.block_queue[idx]
             # if miss ddl in queue, clean and log
@@ -138,7 +138,6 @@ class Appication_Layer(object):
 
         packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
                           next_hop=0,
-                          block_id=self.now_block.block_id,
                           offset=self.now_block_offset,
                           packet_size=self.bytes_per_packet,
                           payload=payload,

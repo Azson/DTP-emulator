@@ -4,12 +4,10 @@ class Packet(object):
     def __init__(self,
                  create_time,
                  next_hop,
-                 block_id,
                  offset,
                  payload,
                  packet_id=None,
                  packet_size=1500,
-                 deadline=0.2,
                  packet_type="S",
                  drop = False,
                  send_delay=.0,
@@ -75,6 +73,25 @@ class Packet(object):
                       packet_size=self.packet_size,
                       payload=self.payload,
                       block_info=self.block_info)
+
+    def get_hash_val(self):
+        tmp = self.trans2dict()
+        MOD = 1234567891
+        ret = 0
+        for key, val in tmp.items():
+            if isinstance(val, dict):
+                for k, v in val.items():
+                    ret = (ret + hash(v)) % MOD
+            else:
+                ret = (ret + hash(val)) % MOD
+        return ret
+
+    def is_miss_ddl(self, cur_time=None):
+        # use current time to judge
+        if cur_time:
+            return cur_time > self.create_time + self.block_info["Deadline"]
+        # for finished packet
+        return self.send_delay+self.pacing_delay+self.latency > self.block_info["Deadline"]
 
     def __lt__(self, other):
         return self.create_time < other.create_time
