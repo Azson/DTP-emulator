@@ -25,8 +25,8 @@ if __name__ == '__main__':
     log_file = "output/pcc_emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
 
-    new_trace_file = "scripts/first_group/traces_1.txt"
-    new_block_files = ["config/data_video.csv", "config/data_audio.csv"]
+    new_trace_file = "scripts/first_group/traces_RL.txt"
+    new_block_files = ["config/data_video.csv", "config/data_audio_RL.csv"]
 
     emulator = PccEmulator(
         block_file=new_block_files,
