@@ -29,8 +29,8 @@ if __name__ == '__main__':
     new_block_files = ["config/data_video.csv", "config/data_audio.csv"]
 
     emulator = PccEmulator(
-        block_file=new_block_files,
-        trace_file=new_trace_file,
+        block_file=block_file,
+        trace_file=trace_file,
         queue_range=(MIN_QUEUE, MAX_QUEUE)
     )
 
@@ -40,5 +40,5 @@ if __name__ == '__main__':
     print(emulator.senders[0].rtt_samples)
     print(emulator.senders[0].application.ack_blocks)
     analyze_pcc_emulator(log_packet_file, file_range="all")
-    plot_cwnd(log_packet_file, trace_file=new_trace_file, file_range="all")
+    plot_cwnd(log_packet_file, trace_file=trace_file, file_range="all")
     # plot_throughput(log_packet_file, trace_file=trace_file, file_range="all")
