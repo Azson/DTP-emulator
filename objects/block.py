@@ -45,6 +45,11 @@ class Block(object):
             "Size" : self.size
         }
 
+    def is_miss_ddl(self):
+        if self.finish_timestamp == -1:
+            return False
+        return self.finish_timestamp-self.timestamp > self.deadline
+
     def __str__(self):
 
         return str(self.__dict__)

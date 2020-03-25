@@ -2,7 +2,6 @@ from config.constant import *
 from common import sender_obs
 from utils import check_solution_format
 from objects.application import Appication_Layer
-from copy import deepcopy
 
 
 class Sender():

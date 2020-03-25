@@ -157,6 +157,7 @@ class Appication_Layer(object):
         # update block information.
         # Which is better? Save packet individual value or sum value
         self.blocks_status[block_id].send_delay += packet.send_delay
+        # whether or not take pacing delay into consideration?
         self.blocks_status[block_id].latency += packet.latency
         self.blocks_status[block_id].finished_bytes += packet.payload
 
@@ -167,6 +168,8 @@ class Appication_Layer(object):
             self.ack_blocks[block_id].append(packet.offset)
 
         if self.is_sended_block(block_id):
+            self.blocks_status[block_id].finish_timestamp = \
+                packet.create_time + packet.send_delay + packet.pacing_delay + packet.latency
             self.log_block(self.blocks_status[block_id])
 
     def log_block(self, block):
@@ -176,11 +179,9 @@ class Appication_Layer(object):
             with open("output/block.log", "w") as f:
                 pass
 
-        if self.is_sended_block(block.block_id):
-            block.finish_timestamp = block.timestamp+block.get_cost_time()
-        else:
+        if not self.is_sended_block(block.block_id):
             block.finish_timestamp = self.init_time + self.pass_time
-        if block.get_cost_time() > block.deadline:
+        if block.is_miss_ddl():
             block.miss_ddl = 1
 
         with open("output/block.log", "a") as f:
