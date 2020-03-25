@@ -93,7 +93,7 @@ class BBR(Reno):
             self.ten_sec_wnd.pop(0)
         idx = -1
         for i, time_rtt in enumerate(self.ten_sec_wnd):
-            if idx == -1 or time_rtt[1] < self.ten_sec_wnd[idx][1]:
+            if idx == -1 or time_rtt[1] <= self.ten_sec_wnd[idx][1]:
                 idx = i
         # now rtt is not the minist
         if idx == -1 or idx != len(self.ten_sec_wnd)-1:
@@ -142,12 +142,13 @@ class BBR(Reno):
             "pacing_rate": self.pacing_rate,
             "extra": {
                 "delivered": self.delivered_nums,
-                "pcing_rate" : self.pacing_rate,
+                "pacing_rate" : self.pacing_rate,
                 "pacing_gain" : self.pacing_gain,
                 "cwnd_gain" : self.cwnd_gain,
                 "max_bw" : self.maxbw,
                 "min_rtt" : self.minrtt,
-                "mode" : self.mode
+                "mode" : self.mode,
+                "cycle_index":self.cycle_index
             }
         }
 
@@ -173,10 +174,6 @@ class BBR(Reno):
             self.append_bw(bw)
             self.four_bws = self.bw_windows[-4:]
             self.maxbw = self.get_max_bw()
-            # self.bbr_bw_rtts -= 1
-            # if self.bbr_bw_rtts == 0:
-            #     self.maxbw = self.get_max_bw()
-            #     self.bbr_bw_rtts = 10
 
             if self.mode == self.bbr_mode[0]:
                 if self.stop_increasing(self.four_bws):
@@ -204,10 +201,11 @@ class BBR(Reno):
             if event_time - self.ten_sec_wnd[0][0] >= self.bbr_min_rtt_win_sec:
                 flag = self.update_min_rtt(event_time)
                 # now rtt is not the minest, so enter prob_rtt
-                if not flag:
+                if (not flag) and self.mode != self.bbr_mode[3]:
                     self.mode = self.bbr_mode[3]
                     self.cwnd = self.bbr_min_cwnd
                     self.probe_rtt_time = event_time
+
             # find new min rtt in bbr_min_rtt_win_sec
             elif rtt < self.ten_sec_wnd[0][1]:
                 self.minrtt = rtt
