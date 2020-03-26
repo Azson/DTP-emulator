@@ -3,6 +3,7 @@ from objects.packet import Packet
 import numpy as np
 import pandas as pd
 from utils import debug_print
+import json
 
 
 class Appication_Layer(object):
@@ -168,8 +169,7 @@ class Appication_Layer(object):
             self.ack_blocks[block_id].append(packet.offset)
 
         if self.is_sended_block(block_id):
-            self.blocks_status[block_id].finish_timestamp = \
-                packet.create_time + packet.send_delay + packet.pacing_delay + packet.latency
+            self.blocks_status[block_id].finish_timestamp = packet.finish_time
             self.log_block(self.blocks_status[block_id])
 
     def log_block(self, block):
@@ -185,7 +185,7 @@ class Appication_Layer(object):
             block.miss_ddl = 1
 
         with open("output/block.log", "a") as f:
-            f.write(str(block)+'\n')
+            f.write(json.dumps(block.trans2dict())+'\n')
 
     def is_sended_block(self, block_id):
         if block_id in self.ack_blocks and \

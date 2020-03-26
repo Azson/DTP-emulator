@@ -17,6 +17,7 @@ class Packet(object):
                  ):
         self.packet_type = packet_type
         self.create_time = create_time
+        self.finish_time = -1
         self.next_hop = next_hop
         self.offset = offset
         self.packet_id = packet_id
@@ -81,15 +82,15 @@ class Packet(object):
         for key, val in tmp.items():
             if isinstance(val, dict):
                 for k, v in val.items():
-                    ret = (ret + hash(v)) % MOD
+                    ret = (ret * (hash(v)%MOD) ) % MOD
             else:
-                ret = (ret + hash(val)) % MOD
+                ret = (ret * (hash(val)%MOD) ) % MOD
         return ret
 
     def is_miss_ddl(self, cur_time=None):
         # use current time to judge
-        if cur_time:
-            return cur_time > self.create_time + self.block_info["Deadline"]
+        if cur_time and self.finish_time != -1:
+            return cur_time > self.finish_time
         # for finished packet
         return self.send_delay+self.pacing_delay+self.latency > self.block_info["Deadline"]
 
