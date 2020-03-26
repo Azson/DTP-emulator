@@ -32,9 +32,9 @@ class PccEmulator(object):
 
         self.links = None
         self.senders = None
+        self.solution = solution
         self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
-        self.solution = solution
         # todo : clear log file in windows or linux
         # currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         # print(currentdir+"\\..output\\packet_log")
