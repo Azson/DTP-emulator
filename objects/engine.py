@@ -61,6 +61,7 @@ class Engine():
             if event_type == EVENT_TYPE_ACK:
                 # got ack in source or destination
                 if next_hop == len(sender.path):
+                    packet.finish_time = event_time
                     self.append_cc_input(event_time, sender, packet)
                     if dropped:
                         sender.on_packet_lost(event_time, packet)

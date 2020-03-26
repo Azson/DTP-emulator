@@ -16,7 +16,8 @@ class PccEmulator(object):
     def __init__(self,
                  block_file=None,
                  trace_file=None,
-                 queue_range=None):
+                 queue_range=None,
+                 solution=None):
 
         self.trace_cols = ("time", "bandwith", "loss_rate", "delay")
         self.queue_range = queue_range if queue_range else (10, 20)
@@ -33,6 +34,7 @@ class PccEmulator(object):
         self.senders = None
         self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
+        self.solution = solution
         # todo : clear log file in windows or linux
         # currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         # print(currentdir+"\\..output\\packet_log")
@@ -67,7 +69,7 @@ class PccEmulator(object):
         self.links = [Link(self.trace_list, queue) , Link([], queue)]
         #self.senders = [Sender(0.3 * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         #self.senders = [Sender(random.uniform(0.2, 0.7) * bw, [self.links[0], self.links[1]], 0, self.history_len)]
-        solution = Aitrans_solution()
+        solution = Aitrans_solution() if not self.solution else self.solution
         self.senders = [W_sender(self.links, 0, self.features,
                                history_len=self.history_len, solution=solution)]
         for item in self.senders:

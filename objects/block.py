@@ -53,3 +53,15 @@ class Block(object):
     def __str__(self):
 
         return str(self.__dict__)
+
+    def trans2dict(self):
+        ret = self.get_block_info()
+        ret.update({
+            "Send_delay" : self.send_delay,
+            "Latency" : self.latency,
+            "Finish_timestamp" : self.finish_timestamp,
+            "Miss_ddl" : self.miss_ddl,
+            "Split_nums" : self.split_nums,
+            "Finished_bytes" : self.finished_bytes
+        })
+        return ret
