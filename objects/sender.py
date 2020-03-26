@@ -2,7 +2,6 @@ from config.constant import *
 from common import sender_obs
 from utils import check_solution_format
 from objects.application import Appication_Layer
-from copy import deepcopy
 
 
 class Sender():
@@ -58,6 +57,13 @@ class Sender():
 
         return packet
 
+    def clear_miss_ddl(self, cur_time):
+
+        for idx in range(len(self.wait_for_select_packets)-1, -1, -1):
+            item = self.wait_for_select_packets[idx]
+            if item.is_miss_ddl(cur_time):
+                self.wait_for_select_packets.pop(idx)
+
     def select_packet(self, cur_time):
         while True:
             # if there is no packet can be sended, we need to send packet that created after cur_time
@@ -65,9 +71,15 @@ class Sender():
             if not packet:
                 break
             self.wait_for_select_packets.append(packet)
+        # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
+        # self.clear_miss_ddl(cur_time)
+        last_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
         # print("wait for select %d, already send %d" % (len(self.wait_for_select_packets), self.sent))
-        # use deepcopy for safety, but may cause bad performance on system
         packet_idx = self.solution.select_packet(cur_time, self.wait_for_select_packets)
+        # use hash for safety
+        now_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
+        if last_hash_vals != now_hash_vals:
+            raise ValueError("You shouldn't change the packet information in system!")
         if isinstance(packet_idx, int) and packet_idx >= 0:
             return self.wait_for_select_packets.pop(packet_idx)
         return None

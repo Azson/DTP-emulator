@@ -10,9 +10,9 @@ class Solution(object):
         '''
         def is_better(packet):
             if best_packet.create_time != packet.create_time:
-                return best_packet.create_time < packet.create_time
-            return (cur_time - packet.create_time) * best_packet.deadline > \
-                    (cur_time - best_packet.create_time) * packet.deadline
+                return best_packet.create_time > packet.create_time
+            return (cur_time - packet.create_time) * best_packet.block_info["Deadline"] > \
+                    (cur_time - best_packet.create_time) * packet.block_info["Deadline"]
 
         best_packet_idx = -1
         best_packet = None

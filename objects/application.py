@@ -49,9 +49,9 @@ class Appication_Layer(object):
             df_data.columns = ["time", "size", "key_frame"]
 
         for idx in range(shape[0]):
-            block = Block(bytes_size=df_data["size"][idx],
+            block = Block(bytes_size=float(df_data["size"][idx]),
                           deadline=0.2,
-                          timestamp=df_data["time"][idx])
+                          timestamp=float(df_data["time"][idx]))
             self.block_queue.append(block)
 
     def create_block_by_file(self, block_file, det=0.1):
@@ -105,7 +105,7 @@ class Appication_Layer(object):
         best_block = self.block_queue[best_block_idx]
 
         self.block_queue.pop(best_block_idx)
-        # filter block with missing ddl
+        # Is it necessary ? filter block with missing ddl
         for idx in range(len(self.block_queue)-1, -1, -1):
             item = self.block_queue[idx]
             # if miss ddl in queue, clean and log
@@ -138,35 +138,39 @@ class Appication_Layer(object):
 
         packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
                           next_hop=0,
-                          block_id=self.now_block.block_id,
                           offset=self.now_block_offset,
                           packet_size=self.bytes_per_packet,
-                          payload=payload
+                          payload=payload,
+                          block_info=self.now_block.get_block_info()
                           )
         self.now_block_offset += 1
 
         return packet
 
     def update_block_status(self, packet):
+        block_id = packet.block_info["Block_id"]
         # filter repeating acked packet
-        if packet.block_id in self.ack_blocks and   \
-            packet.offset in self.ack_blocks[packet.block_id]:
+        if block_id in self.ack_blocks and   \
+                packet.offset in self.ack_blocks[block_id]:
             return
 
         # update block information.
         # Which is better? Save packet individual value or sum value
-        self.blocks_status[packet.block_id].send_delay += packet.send_delay
-        self.blocks_status[packet.block_id].latency += packet.latency
-        self.blocks_status[packet.block_id].finished_bytes += packet.payload
+        self.blocks_status[block_id].send_delay += packet.send_delay
+        # whether or not take pacing delay into consideration?
+        self.blocks_status[block_id].latency += packet.latency
+        self.blocks_status[block_id].finished_bytes += packet.payload
 
-        if packet.block_id not in self.ack_blocks:
-            self.ack_blocks[packet.block_id] = [packet.offset]
+        if block_id not in self.ack_blocks:
+            self.ack_blocks[block_id] = [packet.offset]
         # retransmission packet may be sended many times
         else:
-            self.ack_blocks[packet.block_id].append(packet.offset)
+            self.ack_blocks[block_id].append(packet.offset)
 
-        if self.is_sended_block(packet.block_id):
-            self.log_block(self.blocks_status[packet.block_id])
+        if self.is_sended_block(block_id):
+            self.blocks_status[block_id].finish_timestamp = \
+                packet.create_time + packet.send_delay + packet.pacing_delay + packet.latency
+            self.log_block(self.blocks_status[block_id])
 
     def log_block(self, block):
 
@@ -175,11 +179,9 @@ class Appication_Layer(object):
             with open("output/block.log", "w") as f:
                 pass
 
-        if self.is_sended_block(block.block_id):
-            block.finish_timestamp = block.timestamp+block.get_cost_time()
-        else:
+        if not self.is_sended_block(block.block_id):
             block.finish_timestamp = self.init_time + self.pass_time
-        if block.get_cost_time() > block.deadline:
+        if block.is_miss_ddl():
             block.miss_ddl = 1
 
         with open("output/block.log", "a") as f:

@@ -156,7 +156,8 @@ class Engine():
         :param packet: tuple
         :return: Packet
         '''
-
+        if not ENABLE_LOG:
+            return packet
         def get_true_log_file():
             if isinstance(MAX_PACKET_LOG_ROWS, int) and MAX_PACKET_LOG_ROWS > 0:
                 file_nums = self.log_items // MAX_PACKET_LOG_ROWS
@@ -187,12 +188,6 @@ class Engine():
             log_data["Extra"]["Send_rate"] = sender.rate
 
         with open(get_true_log_file(), "a") as f:
-            # can't serialize int64, where did it got?
-            for k, v in log_data.items():
-                if isinstance(v, dict) or isinstance(v, str):
-                    continue
-                if int(v) == log_data[k]:
-                    log_data[k] = int(v)
             f.write(json.dumps(log_data, ensure_ascii = False)+"\n")
         self.log_items += 1
         return packet

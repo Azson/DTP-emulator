@@ -134,7 +134,7 @@ class BBR(Reno):
             "pacing_rate": self.pacing_rate,
             "extra": {
                 "delivered": self.delivered_nums,
-                "pcing_rate" : self.pacing_rate,
+                "pacing_rate" : self.pacing_rate,
                 "pacing_gain" : self.pacing_gain,
                 "cwnd_gain" : self.cwnd_gain,
                 "max_bw" : self.maxbw,
@@ -205,3 +205,4 @@ class BBR(Reno):
             # update gains
             self.pacing_gain, self.cwnd_gain = self.cal_gain(self.mode)
             self.set_output(self.mode)
+ 

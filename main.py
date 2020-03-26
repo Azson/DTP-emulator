@@ -29,8 +29,8 @@ if __name__ == '__main__':
     new_block_files = ["config/data_video.csv", "config/data_audio.csv"]
 
     emulator = PccEmulator(
-        block_file=new_block_files,
-        trace_file=new_trace_file,
+        block_file=block_file,
+        trace_file=trace_file,
         queue_range=(MIN_QUEUE, MAX_QUEUE)
     )
 
