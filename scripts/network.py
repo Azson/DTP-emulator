@@ -12,8 +12,8 @@ def create_trace(change_scale=5, unchanged=4, cov=0.2, time_length=50):
     '''
 
     # get bitrate levels (in Mbps)
-    min_bitrate = 10
-    max_bitrate = 50
+    min_bitrate = 1
+    max_bitrate = 5
     steps = 10
     bitrate_states_low_var = []
     curr = min_bitrate
@@ -136,4 +136,4 @@ def create_network(row, length):
 
 
 if __name__ == "__main__":
-    create_network(10, 40)
+    create_network(50, 100)

@@ -142,3 +142,26 @@ class PccEmulator(object):
         sender_obs = np.array(sender_obs).reshape(-1, )
         # print(sender_obs)
         return sender_obs
+
+    def cal_qoe(self, x):
+        block_data = []
+        urgency = []
+        priorities = []
+        qoe = 0
+        with open("output/block.log", "r") as f:
+            for line in f.readlines():
+                block_data.append(json.loads(line.replace("'", '"')))
+        for block in block_data:
+            priority = float((int(block['Priority']) + 1) / 3)
+            urge = block['Deadline'] / (block['Finish_timestamp'] - block['Create_time'])
+            if block['Miss_ddl'] == 0:
+                priorities.append(priority)
+                urgency.append(urge)
+            else:
+                priorities.append(priority * (-1))
+                urgency.append(urge * (-1))
+        max_urgency = max(urgency)
+        urgency[:] = [urg / max_urgency for urg in urgency]
+        for i in range(len(urgency)):
+            qoe += x * priorities[i] + (1 - x) * urgency[i]
+        return qoe
