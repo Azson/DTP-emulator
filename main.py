@@ -34,7 +34,7 @@ if __name__ == '__main__':
         queue_range=(MIN_QUEUE, MAX_QUEUE)
     )
 
-    print(emulator.run_for_dur(float("inf")))
+    print(emulator.run_for_dur(120))
     emulator.dump_events_to_file(log_file)
     emulator.print_debug()
     print(emulator.senders[0].rtt_samples)

@@ -54,7 +54,7 @@ class Appication_Layer(object):
 
         for idx in range(shape[0]):
             block = Block(bytes_size=df_data["size"][idx],
-                          deadline=0.2,
+                          deadline=120.0,
                           timestamp=df_data["time"][idx])
             self.block_queue.append(block)
 
