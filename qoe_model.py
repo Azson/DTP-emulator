@@ -10,13 +10,37 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-
+import json
 
 from player.aitrans_solution import Solution as s1
 from player.aitrans_solution2 import Solution as s2
 
 ccs1 = s1()
 ccs2 = s2()
+
+
+def cal_qoe(x):
+    block_data = []
+    urgency = []
+    priorities = []
+    qoe = 0
+    with open("output/block.log", "r") as f:
+        for line in f.readlines():
+            block_data.append(json.loads(line.replace("'", '"')))
+    for block in block_data:
+        priority = float((int(block['Priority']) + 1) / 3)
+        urge = block['Deadline'] / (block['Finish_timestamp'] - block['Create_time'])
+        if block['Miss_ddl'] == 0:
+            priorities.append(priority)
+            urgency.append(urge)
+        else:
+            priorities.append(priority * (-1))
+            urgency.append(urge * (-1))
+    max_urgency = max(urgency)
+    urgency[:] = [urg / max_urgency for urg in urgency]
+    for i in range(len(urgency)):
+        qoe += x * priorities[i] + (1 - x) * urgency[i]
+    return qoe
 
 def cal_distance(block_file, trace_file, x):
     emulator1 = PccEmulator(
@@ -26,7 +50,7 @@ def cal_distance(block_file, trace_file, x):
         solution=ccs1
     )
     emulator1.run_for_dur(float("inf"))
-    reno_qoe = emulator1.cal_qoe(x)
+    reno_qoe = cal_qoe(x)
 
     emulator2 = PccEmulator(
         block_file=block_file,
@@ -35,7 +59,7 @@ def cal_distance(block_file, trace_file, x):
         solution=ccs2
     )
     emulator2.run_for_dur(float("inf"))
-    bbr_qoe = emulator2.cal_qoe(x)
+    bbr_qoe = cal_qoe(x)
     return abs(reno_qoe - bbr_qoe)
 
 
@@ -48,10 +72,10 @@ if __name__ == '__main__':
 
     x = 0
     qoes = {}
-    for i in range(1, 100):
+    for i in range(1, 5):
         x = i / 100
         arr = []
-        for j in range(1, 51):
+        for j in range(1, 5):
             trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
             qoe_distance = cal_distance(block_file, trace_file, x)
             arr.append(qoe_distance)
