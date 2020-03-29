@@ -15,10 +15,6 @@ import json
 from player.aitrans_solution import Solution as s1
 from player.aitrans_solution2 import Solution as s2
 
-ccs1 = s1()
-ccs2 = s2()
-
-
 def cal_qoe(x):
     block_data = []
     urgency = []
@@ -47,7 +43,7 @@ def cal_distance(block_file, trace_file, x):
         block_file=block_file,
         trace_file=trace_file,
         queue_range=(MIN_QUEUE, MAX_QUEUE),
-        solution=ccs1
+        solution=s1()
     )
     emulator1.run_for_dur(float("inf"))
     reno_qoe = cal_qoe(x)
@@ -56,7 +52,7 @@ def cal_distance(block_file, trace_file, x):
         block_file=block_file,
         trace_file=trace_file,
         queue_range=(MIN_QUEUE, MAX_QUEUE),
-        solution=ccs2
+        solution=s2()
     )
     emulator2.run_for_dur(float("inf"))
     bbr_qoe = cal_qoe(x)
@@ -72,10 +68,10 @@ if __name__ == '__main__':
 
     x = 0
     qoes = {}
-    for i in range(1, 5):
+    for i in range(1, 100):
         x = i / 100
         arr = []
-        for j in range(1, 5):
+        for j in range(1, 60):
             trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
             qoe_distance = cal_distance(block_file, trace_file, x)
             arr.append(qoe_distance)
