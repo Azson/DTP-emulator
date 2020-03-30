@@ -2,6 +2,7 @@ from config.constant import *
 from common import sender_obs
 from utils import check_solution_format
 from objects.application import Appication_Layer
+from config import constant
 
 
 class Sender():
@@ -105,7 +106,7 @@ class Sender():
         self.rate = ret["send_rate"] if "send_rate" in ret else self.rate
         self.cwnd = ret["cwnd"] if "cwnd" in ret else self.cwnd
         self.extra = ret["extra"] if "extra" in ret else self.extra
-        if USE_CWND:
+        if constant.USE_CWND:
             return int(self.bytes_in_flight) / BYTES_PER_PACKET < self.cwnd
         else:
             return True

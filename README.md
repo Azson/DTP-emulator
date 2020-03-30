@@ -1,5 +1,49 @@
 # Quickly Start
 
+## For pypi
+
+We have package our repository into [DTP_Emulator](https://pypi.org/project/DTP-Emulator/),
+which means that you can run order
+
+> pip install DTP-Emulator
+
+to install it.
+
+There may be some differences between this and below. But you can finished according to the next steps :
+
+- create your module
+
+```python
+from simple_emulator import Packet_selection, CongestionControl
+
+
+# Your solution should include packet selection and congestion control.
+# So, we recommend you to achieve it by inherit the objects we provided and overwritten necessary method.
+class Solution(Packet_selection, CongestionControl):
+    pass
+```
+
+- create emulator
+
+```python
+from simple_emulator import PccEmulator
+
+
+# Use the object you created above
+my_solution = Solution()
+emulator = PccEmulator(solution=my_solution)
+```
+
+- run emualtor
+
+```python
+# You can specify the time for the emualtor's running.
+# It will run until there is no packet can sent by default. 
+emulator.run_for_dur()
+```
+
+## For this repository
+
 For players, you need to finish the code both of  "congestion_control_algorithm.py" 
 and "block_selection.py" files in path of "/player".
 
@@ -16,13 +60,24 @@ You will get some output in the path "/output/" and should fix your code accordi
 
 Here are the 2 modules that players need to finished.
 
-### block_selection.py
+### aitrans_solution.py
 
-In this module, you have to implement the function "select_block" with the parameters "cur_time, block_queue" and return an integer value which means the block index in block queue, which will be sent at the time "cur_time".
+It should be implemented with these method :
 
-#### select_block
+- [select_packet](#select_packet)
+- [make_decision](#make_decision)
+- [append_input](#append_input)
 
-For every block in block queue, it's implement in "objects/block.py". But we recommend you to get more information at  [Block](#block-log) .
+In case you forget, we recommend you implement by inheriting the objects from Solution in packet_selection.py
+and Solution in congestion_control_algorithm.py and overwrite there methods.
+
+### packet_selection.py
+
+In this module, you have to implement the function "select_packet" with the parameters "cur_time, packet_queue" and return an integer value which means the packet index in packet queue, which will be sent at the time "cur_time".
+
+#### select_packet
+
+For every packet in packet queue, it's implement in "objects/packet.py". But we recommend you to get more information at  [Packet](#packet-log) .
 
 ### congestion_control_algorithm.py
 
@@ -66,6 +121,24 @@ Why we design a individual function to add element to "_input_list"?
 It's because there are some congestion control algorithm that need to update window size and send rate immediately. So you need to return a dictionary with window size and send rate if you want to do some changes as soon as the data is received , like [here](#make_decision).
 
 ## config
+
+### constant
+
+Here are some constants that may be help for you：
+
+- USE_CWND
+
+  > Set "False" if your congestion control algorithm don't use cwnd.
+
+- ENABLE_LOG
+
+  > Set "False" if you don't want to generate packet log in path "output/packet_log".
+
+- MAX_PACKET_LOG_ROWS
+
+  > The number of rows for a single packet log. If you just want to use one file to log, set it "None".
+
+All of these constants can be set on the create of emulator by the key words arguments.
 
 ### Block data
 
@@ -119,40 +192,51 @@ For every row,  it's form like below：
 
 ```json
 {
-    "Time": 0.001,
-    "Cwnd": 1, 
-    "Waiting_for_ack_nums": 1, 
-    "Type": "A", 
-    "Position": 1, 
+    "Time": 0.0, 
+    "Waiting_for_ack_nums": 0, 
+    "Type": "S", 
+    "Position": 0, 
     "Send_delay": 0.0, 
-    "Lantency": 0.001, 
+    "Pacing_delay": 0.0, 
+    "Lantency": 0.0, 
     "Drop": 0, 
     "Packet_id": 1, 
-    "Block_id": 1, 
     "Create_time": 0.0, 
-    "Deadline": 0.2, 
     "Offset": 0, 
     "Payload": 1480, 
-    "Packet_size": 1500
+    "Packet_size": 1500, 
+    "Extra": {
+        "Cwnd": 1
+    }, 
+    "Block_info": {
+        "Block_id": 1, 
+        "Priority": "0", 
+        "Deadline": 0.2, 
+        "Create_time": 0.0, 
+        "Size": 200000.0
+    }
 }
 ```
 
 Here is every key's explanation：
 
 - Time : The time handle this event;
-- Cwnd : The size of crowded window at sender.Its unit is packet; 
 - Waiting_for_ack_nums : The numbers of packets that sended but not acknowledged by source.
 - Type : To distinguish sending or acknowledge packet;
+- Position : The position that packet on. It's 0 if packet on source. 
 - Send_delay : The time that packet sent into window;
+- Pacing_delay : The time that packet send into network. It's used in the congestion control like BBR.
 - Lantency : The time that packet spending on links including queue delay and propagation delay;
 - Drop : Label whether the packet is dropped;
 - Packet_id : The Identity of packet;
-- Block_id : The identity of the block to which the packet belongs;
 - Create_time : The time when the packet is created;
-- Deadline : The deadline of the block to which the packet belongs;
 - Offset : The offset of the packet in its block;
 - Payload : The size of valid data in packet whose unit is bytes;
 - Packet_size : The size of the packet whose unit is bytes;
+- Extra : The filed we provided for your congestion control. 
+We will fill it when system need to send packet (equals to calling "make_decision" method in your solution).
+    - Cwnd : The size of crowded window at sender.Its unit is packet; 
+- Block_info : The block information that the packet belong to. You can get more from below.
 
 ### block log
 
@@ -162,33 +246,33 @@ For every row, it's form like below：
 
 ``` json
 {
-    "priority": 0, 
-    "block_id": 1, 
-    "size": 9584, 
-    "deadline": 0.2, 
-    "timestamp": 0.0, 
-    "send_delay": 0.0, 
-    "latency": 0.014309502968274143, 
-    "finish_timestamp": 0.014309502968274143, 
-    "miss_ddl": 0, 
-    "split_nums": 7, 
-    "finished_bytes": 9584
+    "Block_id": 4, 
+    "Priority": "0", 
+    "Deadline": 0.2, 
+    "Create_time": 3.0, 
+    "Size": 200000.0, 
+    "Send_delay": 0.0, 
+    "Latency": 1.4900000000000104, 
+    "Finish_timestamp": 3.0425, 
+    "Miss_ddl": 0, 
+    "Split_nums": 136, 
+    "Finished_bytes": 200000.0
 }
 ```
 
 Here is every key's explanation：
 
-- priority : The degree of emergency of block;
-- block_id : The identity of block;
-- size : The size of block whose unit is bytes;
-- deadline : The block's failure time size;
-- timestamp : The time when block is created;
-- send_delay : The sum of all packets's "send_delay" which belong to the block;
-- latency : The sum of all packets's "latency" which belong to the block;
-- finish_timestamp :  The time when block is finished if it don't miss deadine; Otherwise, it's the time when the block was detected failure;
-- miss_ddl : Whether the block is miss deadline;
-- split_nums : The count of packets that the block is divided;
-- finished_bytes : The number of bytes received by the receiver.
+- Priority : The degree of emergency of block;
+- Block_id : The identity of block;
+- Size : The size of block whose unit is bytes;
+- Deadline : The block's failure time size;
+- Create_time : The time when block is created;
+- Send_delay : The sum of all packets's "send_delay" which belong to the block;
+- Latency : The sum of all packets's "latency" which belong to the block;
+- Finish_timestamp :  The time when block is finished if it don't miss deadine; Otherwise, it's the time when the block was detected failure;
+- Miss_ddl : Whether the block is miss deadline;
+- Split_nums : The count of packets that the block is divided;
+- Finished_bytes : The number of bytes received by the receiver.
 
 ### cwnd_changing.png
 
@@ -216,7 +300,7 @@ We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also c
 
 # Todo list
 
-- [ ] Add BBR congestion control module.
+- [ x ] Add BBR congestion control module.
 - [ ] Add AI congestion control module.
 - [ ] Add QOE mudule.
 - [ ] Add system presentation PPT.

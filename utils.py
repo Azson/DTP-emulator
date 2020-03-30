@@ -12,6 +12,7 @@ import time, json
 from matplotlib import pyplot as plt
 import numpy as np
 from config.constant import *
+from config import constant
 
 
 def get_ms_time(rate=1000):
@@ -161,7 +162,7 @@ def get_packet_type(sender, packet):
 
 
 def debug_print(*args, **kwargs):
-    if ENABLE_DEBUG:
+    if constant.ENABLE_DEBUG:
         print(*args, **kwargs)
 
 
@@ -193,7 +194,7 @@ def compose_packet_logs(file_range, pattern=None):
 
 
 def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None):
-    if not USE_CWND:
+    if not constant.USE_CWND:
         print("Your congestion control don't use windows~")
         return
     plt_data = []
