@@ -38,7 +38,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     if isinstance(rows, int):
         plt_data = plt_data[:rows]
 
-    pic_nums = 1
+    pic_nums = 2
     font_size = 50
     tick_size = 50
 
@@ -54,7 +54,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
             else:
                 data_lantency.append(item["Lantency"])
                 data_finish_time.append(item["Time"])
-                data_sum_time.append(item["Send_delay"] + item["Lantency"])
+                data_sum_time.append(item["Send_delay"] + item["Pacing_delay"] + item["Lantency"])
 
             if item["Block_info"]["Deadline"] < data_sum_time[-1]:
                 data_miss_ddl.append(idx)
@@ -93,20 +93,20 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     # ax.set_xlim(data_finish_time[0] / 2, data_finish_time[-1] * 1.5)
     # plt.tick_params(labelsize=tick_size)
 
-    # # plot latency distribution
-    # ax = plt.subplot(pic_nums, 1, 3)
-    # ax.set_title("Acked packet life time distribution", fontsize=font_size)
-    # ax.set_ylabel("Latency / s", fontsize=font_size)
-    # ax.set_xlabel("Time / s", fontsize=font_size)
+    # plot latency distribution
+    ax = plt.subplot(pic_nums, 1, 2)
+    ax.set_title("Acked packet RTT distribution", fontsize=font_size)
+    ax.set_ylabel("RTT / s", fontsize=font_size)
+    ax.set_xlabel("Time / s", fontsize=font_size)
     # ax.set_ylim(-np.min(data_sum_time)*2, np.max(data_sum_time)*2)
-    #
-    # ax.scatter(data_finish_time, data_sum_time, label="Latency")
-    # # plot average latency
-    # ax.plot([0, data_finish_time[-1]], [np.mean(data_sum_time)] * 2, label="Average Latency",
-    #         c='r')
-    # plt.legend(fontsize=font_size)
+
+    ax.plot(data_finish_time, data_sum_time, label="Latency", linewidth=5)
+    # plot average latency
+    ax.plot([0, data_finish_time[-1]], [np.mean(data_sum_time)] * 2, label="Average Rtt",
+            c='r', linewidth=5)
+    plt.legend(fontsize=font_size)
     # ax.set_xlim(data_finish_time[0]/2, data_finish_time[-1]*1.5)
-    # plt.tick_params(labelsize=tick_size)
+    plt.tick_params(labelsize=tick_size)
 
     # plot bandwith
     if trace_file:
@@ -236,7 +236,7 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
     if scatter:
         ax.scatter(data_time, data_cwnd, label="cwnd", c='g', s=200)
     else:
-        ax.plot(data_time, data_cwnd, label="cwnd", c='g')
+        ax.plot(data_time, data_cwnd, label="cwnd", c='g', linewidth=5)
     ax.set_ylabel("Packet", fontsize=font_size)
     ax.set_xlabel("Time / s", fontsize=font_size)
     plt.tick_params(labelsize=tick_size)
@@ -337,12 +337,12 @@ def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatt
     ax = plt.subplot(pic_nums, 1, 1)
     if scatter:
         # ax.scatter(data_time, data_throughput, label="Throughput", c='g', s=200)
-        ax.scatter(data_time, data_bdp, label="BDP", c='y', s=200)
+        ax.scatter(data_time, data_bdp, label="BDP", c='black', s=200)
         ax.scatter(data_time, data_inflight, label="Inflight", c='r', s=200)
     else:
         # ax.plot(data_time, data_throughput, label="Throughput", c='g')
-        ax.plot(data_time, data_bdp, label="BDP", c='y')
-        ax.plot(data_time, data_inflight, label="Inflight", c='r')
+        ax.plot(data_time, data_bdp, label="BDP", c='black', linewidth=5)
+        ax.plot(data_time, data_inflight, label="Inflight", c='r', linewidth=5)
     ax.set_ylabel("Packet Numbers", fontsize=font_size)
     ax.set_xlabel("Time / s", fontsize=font_size)
     plt.tick_params(labelsize=tick_size)
