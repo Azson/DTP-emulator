@@ -1,6 +1,6 @@
 from config.constant import *
 from common import sender_obs
-from utils import check_solution_format
+from utils import check_solution_format, measure_time
 from objects.application import Appication_Layer
 from config import constant
 
@@ -51,6 +51,7 @@ class Sender():
     def init_application(self, block_file):
         self.application = Appication_Layer(block_file, bytes_per_packet=BYTES_PER_PACKET)
 
+    @measure_time()
     def new_packet(self, cur_time, mode):
         packet = self.application.get_next_packet(cur_time, mode)
         if packet:
@@ -65,6 +66,7 @@ class Sender():
             if item.is_miss_ddl(cur_time):
                 self.wait_for_select_packets.pop(idx)
 
+    @measure_time()
     def select_packet(self, cur_time):
         while True:
             # if there is no packet can be sended, we need to send packet that created after cur_time
@@ -74,13 +76,15 @@ class Sender():
             self.wait_for_select_packets.append(packet)
         # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
         # self.clear_miss_ddl(cur_time)
-        last_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
+        if constant.ENABLE_HASH_CHECK:
+            last_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
         # print("wait for select %d, already send %d" % (len(self.wait_for_select_packets), self.sent))
         packet_idx = self.solution.select_packet(cur_time, self.wait_for_select_packets)
         # use hash for safety
-        now_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
-        if last_hash_vals != now_hash_vals:
-            raise ValueError("You shouldn't change the packet information in system!")
+        if constant.ENABLE_HASH_CHECK:
+            now_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
+            if last_hash_vals != now_hash_vals:
+                raise ValueError("You shouldn't change the packet information in system!")
         if isinstance(packet_idx, int) and packet_idx >= 0:
             return self.wait_for_select_packets.pop(packet_idx)
         return None

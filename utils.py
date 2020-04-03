@@ -20,6 +20,20 @@ def get_ms_time(rate=1000):
     return time.time()*rate
 
 
+def measure_time():
+    def wraps(func):
+        def measure(*args,**kwargs):
+            start = time.time()
+            res = func(*args,**kwargs)
+            end = time.time()
+            if constant.ENABLE_DEBUG:
+                with open("output/funtion_time_test.log", "a") as f:
+                    f.write("function %s use time %s\n"%(func.__name__, (end-start)))
+            return res
+        return measure
+    return wraps
+
+
 def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, scatter=False, file_range=None):
 
     plt_data = []

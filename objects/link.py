@@ -69,6 +69,8 @@ class Link():
                 used_time = tmp
                 rest_block_size -= used_time * self.bandwith
                 self.bandwith = self.trace_list[i][1] * 10 ** 6 / BYTES_PER_PACKET
+                self.loss_rate = self.trace_list[i][2]
+                self.delay = self.trace_list[i][3]
             else:
                 rest_block_size = 0
             transmition_time += used_time
