@@ -25,15 +25,11 @@ def cal_qoe(x):
             block_data.append(json.loads(line.replace("'", '"')))
     for block in block_data:
         priority = float((int(block['Priority']) + 1) / 3)
-        urge = block['Deadline'] / (block['Finish_timestamp'] - block['Create_time'])
+        priorities.append(priority)
         if block['Miss_ddl'] == 0:
-            priorities.append(priority)
-            urgency.append(urge)
+            urgency.append(1)
         else:
-            priorities.append(priority * (-1))
-            urgency.append(urge * (-1))
-    max_urgency = max(urgency)
-    urgency[:] = [urg / max_urgency for urg in urgency]
+            urgency.append(0)
     for i in range(len(urgency)):
         qoe += x * priorities[i] + (1 - x) * urgency[i]
     return qoe
@@ -68,10 +64,10 @@ if __name__ == '__main__':
 
     x = 0
     qoes = {}
-    for i in range(1, 100):
+    for i in range(1, 100, 2):
         x = i / 100
         arr = []
-        for j in range(1, 60):
+        for j in range(1, 10):
             trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
             qoe_distance = cal_distance(block_file, trace_file, x)
             arr.append(qoe_distance)
@@ -80,7 +76,7 @@ if __name__ == '__main__':
     best_x = max(qoes, key=qoes.get)
     with open("qoemodel/qoe_model.log","w+") as f:
         f.write(str(qoes) + '\n')
-        f.write("best_x: " + str(best_x))
+        f.write(str(best_x) + " * priority + " + str(1 - best_x) + " * ddl " )
 
 
 

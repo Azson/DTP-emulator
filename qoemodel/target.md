@@ -1,8 +1,8 @@
 ## 目标
-- 计算出一个参数x, 使得在不同trace下，两种算法qoe的差值最大；
+- 计算出一个参数x, 使得在不同trace下，两种算法所有qoe的差的方差最大；
 
 ## 思路
-- qoe 的计算公式：qoe = x * finish_time(归一化后) +（1 - x）* priority (归一化)
+- qoe 的计算公式：qoe = x * （deadline / finish_time(归一化后)) +（1 - x）* priority (归一化)
    - 问题：这个是完成时候的时间还是完成所消耗的时间
 
 - 首先产生100个trace;

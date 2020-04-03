@@ -3,7 +3,7 @@ from sympy import Symbol, solve
 
 
 
-def create_trace(change_scale=5, unchanged=4, cov=0.2, time_length=50):
+def create_trace(change_scale=5, unchanged=4, cov=0.2, time_length=50, min_bitrate = 0.2, max_bitrate = 2):
     '''
     change_scale : the scale of probability to change state
     unchanged : the number of unchanged state
@@ -11,9 +11,9 @@ def create_trace(change_scale=5, unchanged=4, cov=0.2, time_length=50):
     time_length : the numbers of bitrate
     '''
 
-    # get bitrate levels (in Mbps)
-    min_bitrate = 1
-    max_bitrate = 5
+    # # get bitrate levels (in Mbps)
+    # min_bitrate = 0.2
+    # max_bitrate = 2
     steps = 10
     bitrate_states_low_var = []
     curr = min_bitrate
@@ -114,16 +114,16 @@ def create_trace(change_scale=5, unchanged=4, cov=0.2, time_length=50):
         time += 1
     return bitrates
 
-def create_network(row, length):
+def create_network(row, length, min_bitrate, max_bitrate):
     for idx in range(length):
         trace_list = []
         cs = random.randint(3, 10)
         uc = random.randint(3, 6)
         cv = random.uniform(0, 1)
         # pars = list(map(str, [cs, uc, cv, row]))
-        bw = create_trace(change_scale=cs, unchanged=uc, cov=cv, time_length=row)
+        bw = create_trace(change_scale=cs, unchanged=uc, cov=cv, time_length=row, min_bitrate = min_bitrate, max_bitrate = max_bitrate)
         for i in range(row):
-            trace_list.append([i , bw.pop(), 0, 0.001])
+            trace_list.append([i , bw.pop(), 0.001, 0.001])
         with open("first_group/traces_"+str(idx + 1)+".txt", "w+") as f:
             # f.write("parameters: ")
             # for i in range(3):
@@ -136,4 +136,4 @@ def create_network(row, length):
 
 
 if __name__ == "__main__":
-    create_network(50, 100)
+    create_network(50, 100, 0.2, 2)
