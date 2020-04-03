@@ -9,7 +9,8 @@ import numpy as np
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-
+import matplotlib.pyplot as plt
+import numpy as np
 import json
 
 from player.aitrans_solution import Solution as s1
@@ -54,6 +55,15 @@ def cal_distance(block_file, trace_file, x):
     bbr_qoe = cal_qoe(x)
     return [reno_qoe, bbr_qoe]
 
+def plt_qoe(reno_arr, bbr_arr):
+    x = np.linspace(1, 50, 50)
+    fig, ax = plt.subplots()
+    ax.plot(x,reno_arr, color="blue", label="reno_qoe")
+    ax.plot(x, bbr_arr, color="red", label="bbr_qoe")
+    ax.set_xlabel("trace_index")
+    ax.set_ylabel("qoe")
+    ax.legend()
+    plt.savefig("qoemodel/qoes.png")
 
 
 if __name__ == '__main__':
@@ -61,20 +71,25 @@ if __name__ == '__main__':
     block_file = "config/block.txt"
     log_file = "output/pcc_emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
+    x = 0.1
+    reno_arr = []
+    bbr_arr = []
+    for j in range(1, 51):
+        trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
+        qoe_difference = cal_distance(block_file, trace_file, x)
+        reno_arr.append(qoe_difference[0])
+        bbr_arr.append(qoe_difference[1])
 
-    x = 0
-    qoes = {}
-    for i in range(1, 12, 2):
-        x = i / 100
-        arr = []
-        for j in range(1, 10):
-            trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
-            qoe_difference = cal_distance(block_file, trace_file, x)
-            arr.append(qoe_difference)
-        qoes[x] = arr
+    plt_qoe(reno_arr, bbr_arr)
 
-    with open("qoemodel/qoe_difference.log","w+") as f:
-        f.write(str(qoes) + '\n')
+    with open("qoemodel/bbr_reno_qoes.log","w+") as f:
+        strs = ["trace numbers : 50\n", "buffer: MAX_QUEUE = 10, MIN_QUEUE = 50\n",
+                "bw : 0.1 ~ 2 MB \n",
+                "qoe = 0.1 * priority + 0.9 * deadline\n",
+                str(reno_arr) + "\n",
+                str(bbr_arr)]
+        f.writelines(strs)
+
 
 
 
