@@ -1,6 +1,7 @@
 import heapq, random, json
 from config.constant import *
 from utils import get_packet_type, get_emulator_info, debug_print
+from config import constant
 
 
 class Engine():
@@ -71,7 +72,7 @@ class Engine():
                         sender.on_packet_acked(cur_latency, packet)
                         # print("Packet acked at time %f" % self.cur_time)
                     # for windows-based cc
-                    if USE_CWND:
+                    if constant.USE_CWND:
                         for _packet in sender.slide_windows(self.cur_time, len(self.q)):
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
@@ -99,7 +100,7 @@ class Engine():
                     _packet = sender.select_packet(new_event_time + (1.0 / sender.rate)) # new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
                         heapq.heappush(sender.wait_for_push_packets, [event_time, sender, _packet])
-                        if not USE_CWND or int(sender.cwnd) > 1+len(self.q):
+                        if not constant.USE_CWND or int(sender.cwnd) > 1+len(self.q):
                             item = heapq.heappop(sender.wait_for_push_packets)
                             heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \
                                                     item[1], item[2]))
@@ -157,17 +158,17 @@ class Engine():
         :param packet: tuple
         :return: Packet
         '''
-        if not ENABLE_LOG:
+        if not constant.ENABLE_LOG:
             return packet
         def get_true_log_file():
-            if isinstance(MAX_PACKET_LOG_ROWS, int) and MAX_PACKET_LOG_ROWS > 0:
-                file_nums = self.log_items // MAX_PACKET_LOG_ROWS
-                if self.log_items and self.log_items % MAX_PACKET_LOG_ROWS == 0:
+            if isinstance(constant.MAX_PACKET_LOG_ROWS, int) and constant.MAX_PACKET_LOG_ROWS > 0:
+                file_nums = self.log_items // constant.MAX_PACKET_LOG_ROWS
+                if self.log_items and self.log_items % constant.MAX_PACKET_LOG_ROWS == 0:
                     self.fir_log = True
                 return self.log_packet_file.replace('0', str(file_nums))
             return self.log_packet_file
 
-        if ENABLE_DEBUG and event_time - self.last_alert_time >= ALERT_CIRCLE:
+        if constant.ENABLE_DEBUG and event_time - self.last_alert_time >= ALERT_CIRCLE:
             self.last_alert_time = event_time
             sender_mi = self.senders[0].get_run_data()
             print("Time : {}".format(event_time))
@@ -183,7 +184,7 @@ class Engine():
             "Waiting_for_ack_nums" : sender.get_waiting_ack_nums()
         }
         log_data.update(packet.trans2dict())
-        if USE_CWND:
+        if constant.USE_CWND:
             log_data["Extra"]["Cwnd"] = sender.cwnd
         if sender.rate != float("inf"):
             log_data["Extra"]["Send_rate"] = sender.rate

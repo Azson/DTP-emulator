@@ -9,6 +9,12 @@ from objects.link import Link
 from objects.engine import Engine
 
 from player.aitrans_solution import Solution as Aitrans_solution
+from config import constant
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+if "simple_emulator" not in parentdir:
+    parentdir += "simple_emulator"
 
 
 class PccEmulator(object):
@@ -17,12 +23,15 @@ class PccEmulator(object):
                  block_file=None,
                  trace_file=None,
                  queue_range=None,
-                 solution=None):
+                 solution=None,
+                 **kwargs):
+        # do configure on constant
+        self.update_config(kwargs)
 
         self.trace_cols = ("time", "bandwith", "loss_rate", "delay")
-        self.queue_range = queue_range if queue_range else (10, 20)
-        self.trace_file = trace_file
-        self.block_file = block_file
+        self.queue_range = queue_range if queue_range else (constant.MIN_QUEUE, constant.MAX_QUEUE)
+        self.trace_file = trace_file if trace_file else parentdir + "/config/trace.txt"
+        self.block_file = block_file if block_file else parentdir + "/config/block.txt"
         self.event_record = { "Events" : [] }
 
         # unkown params
@@ -35,11 +44,16 @@ class PccEmulator(object):
         self.solution = solution
         self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
-        # todo : clear log file in windows or linux
-        # currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-        # print(currentdir+"\\..output\\packet_log")
-        # os.system("rm -rf %s" % (currentdir+"\\..\\output\\packet_log"))
-        # os.system("mkdir %s" % (currentdir+"\\..\\output\\packet_log"))
+
+    def update_config(self, extra):
+        if "USE_CWND" in extra:
+            constant.USE_CWND = extra["USE_CWND"]
+        if "ENABLE_DEBUG" in extra:
+            constant.ENABLE_DEBUG = extra["ENABLE_DEBUG"]
+        if "ENABLE_LOG" in extra:
+            constant.ENABLE_LOG = extra["ENABLE_LOG"]
+        if "MAX_PACKET_LOG_ROWS" in extra:
+            constant.ENABLE_LOG = extra["MAX_PACKET_LOG_ROWS"]
 
     def get_trace(self):
 
@@ -76,7 +90,7 @@ class PccEmulator(object):
             item.init_application(self.block_file)
 
 
-    def run_for_dur(self, during_time):
+    def run_for_dur(self, during_time=float("inf")):
 
         # action = [0.9, 0.9]
         # for i in range(len(self.senders)):
