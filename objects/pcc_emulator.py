@@ -52,8 +52,14 @@ class PccEmulator(object):
             constant.ENABLE_DEBUG = extra["ENABLE_DEBUG"]
         if "ENABLE_LOG" in extra:
             constant.ENABLE_LOG = extra["ENABLE_LOG"]
+        if "ENABLE_HASH_CHECK" in extra:
+            constant.ENABLE_HASH_CHECK = extra["ENABLE_HASH_CHECK"]
         if "MAX_PACKET_LOG_ROWS" in extra:
             constant.ENABLE_LOG = extra["MAX_PACKET_LOG_ROWS"]
+        if "MIN_QUEUE" in extra:
+            constant.MIN_QUEUE = extra["MIN_QUEUE"]
+        if "MAX_QUEUE" in extra:
+            constant.MAX_QUEUE = extra["MAX_QUEUE"]
 
     def get_trace(self):
 

@@ -1,5 +1,9 @@
+from utils import measure_time
+
+
 class Solution(object):
 
+    @measure_time()
     def select_packet(self, cur_time, packet_queue):
         '''
         The alogrithm to select the packet which will be sended in next.
