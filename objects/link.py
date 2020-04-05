@@ -6,10 +6,10 @@ import numpy as np
 class Link():
 
     def __init__(self, trace_list, queue_size):
-        '''
+        """
         :param trace_list: [[time, bandwith, loss_rate, delay] ...]
         :param queue_size:
-        '''
+        """
         self.trace_list = trace_list
         if len(trace_list) == 0:
             self.bandwith = np.inf
@@ -28,16 +28,14 @@ class Link():
         self.queue_size = queue_size
         self.trace_start_id = 0
 
-
     def get_cur_queue_delay(self, event_time):
         return max(0.0, self.queue_delay - (event_time - self.queue_delay_update_time))
-
 
     def get_cur_latency(self, event_time):
         return self.delay + self.get_cur_queue_delay(event_time)
 
-
     def packet_enters_link(self, event_time):
+        """check whether or not there is random loss or congestion loss in link at time of "event_time"."""
         if (random.random() < self.loss_rate):
             return False
         self.queue_delay = self.get_cur_queue_delay(event_time)
@@ -51,9 +49,8 @@ class Link():
         # print("\tNew delay = %f" % self.queue_delay)
         return True
 
-
     def send_delay(self, event_time):
-
+        """calculate the time sent packet out of link when there is a changeable bandwidth, loss rate and delay."""
         rest_block_size = 1
         transmition_time = 0
         # different bandwith
@@ -83,7 +80,6 @@ class Link():
 
         return transmition_time
 
-
     def print_debug(self):
         print("Link:")
         print("Bandwidth: %f" % self.bandwith)
@@ -91,7 +87,6 @@ class Link():
         print("Queue Delay: %f" % self.queue_delay)
         print("Max Queue Delay: %f" % self.max_queue_delay)
         print("One Packet Queue Delay: %f" % (1.0 / self.bandwith))
-
 
     def reset(self):
         self.queue_delay = 0.0

@@ -8,6 +8,7 @@ class CongestionControl(object):
         self.call_nums = 0
 
     def make_decision(self):
+        """call this when sender send packet"""
         self.call_nums += 1
 
         output = {

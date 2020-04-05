@@ -42,10 +42,12 @@ class PccEmulator(object):
         self.links = None
         self.senders = None
         self.solution = solution
+        self.trace_list = None
         self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
 
     def update_config(self, extra):
+        """make it available that change some variable in constant.py by the way of transmitting function parameters."""
         if "USE_CWND" in extra:
             constant.USE_CWND = extra["USE_CWND"]
         if "ENABLE_DEBUG" in extra:
@@ -62,7 +64,7 @@ class PccEmulator(object):
             constant.MAX_QUEUE = extra["MAX_QUEUE"]
 
     def get_trace(self):
-
+        """init the "trace_list" according to the trace file."""
         trace_list = []
         with open(self.trace_file, "r") as f:
             for line in f.readlines():
@@ -77,9 +79,8 @@ class PccEmulator(object):
 
         return trace_list
 
-
     def create_new_links_and_senders(self):
-
+        """create links and senders in this network."""
         self.trace_list = self.get_trace()
         # queue = 1 + int(np.exp(random.uniform(*self.queue_range)))
         # print("queue size : %d" % queue)
@@ -95,9 +96,8 @@ class PccEmulator(object):
         for item in self.senders:
             item.init_application(self.block_file)
 
-
     def run_for_dur(self, during_time=float("inf")):
-
+        """run this emulator for time of "dur_time"."""
         # action = [0.9, 0.9]
         # for i in range(len(self.senders)):
         #     self.senders[i].apply_rate_delta(action[0])
@@ -118,7 +118,6 @@ class PccEmulator(object):
 
         return event, sender_obs
 
-
     def print_debug(self):
         print("---Link Debug---")
         for link in self.links:
@@ -126,7 +125,6 @@ class PccEmulator(object):
         print("---Sender Debug---")
         for sender in self.senders:
             sender.print_debug()
-
 
     def reset(self):
         self.steps_taken = 0
@@ -145,17 +143,14 @@ class PccEmulator(object):
         self.reward_sum = 0.0
         return self._get_all_sender_obs()
 
-
     def close(self):
         if self.viewer:
             self.viewer.close()
             self.viewer = None
 
-
     def dump_events_to_file(self, filename):
         with open(filename, 'w') as f:
             json.dump(self.event_record, f, indent=4)
-
 
     def _get_all_sender_obs(self):
         sender_obs = self.senders[0].get_obs()

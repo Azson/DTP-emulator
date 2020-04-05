@@ -8,7 +8,6 @@ import json
 
 class Appication_Layer(object):
 
-
     def __init__(self,
                  block_file,
                  create_det=1,
@@ -32,6 +31,11 @@ class Appication_Layer(object):
         self.blocks_status = dict()
 
     def handle_block(self, block_file):
+        """
+        creating block queue by "block_file".
+        :param block_file: str
+        :return:
+        """
         if isinstance(block_file, str):
             block_file = [block_file]
         for single_file in block_file:
@@ -97,15 +101,13 @@ class Appication_Layer(object):
         return best_block_idx
 
     def select_block(self):
-
+        """select the block that not sent and return it  """
         cur_time = self.init_time + self.pass_time
         # call player's code
         best_block_idx = self.select_algorithm(cur_time, self.block_queue)
         if best_block_idx == -1:
             return None
-        best_block = self.block_queue[best_block_idx]
-
-        self.block_queue.pop(best_block_idx)
+        best_block = self.block_queue.pop(best_block_idx)
         # Is it necessary ? filter block with missing ddl
         for idx in range(len(self.block_queue)-1, -1, -1):
             item = self.block_queue[idx]
@@ -118,6 +120,12 @@ class Appication_Layer(object):
         return best_block
 
     def get_next_packet(self, cur_time, mode=None):
+        """
+        get the packet that can be sent at "cur_time" and return it to sender.
+        :param cur_time: float, current time.
+        :param mode: if mode is "force", it will return the packet after cur_time in case of lacking of packet.
+        :return: Packet.
+        """
         self.pass_time = cur_time
         if self.now_block is None or self.now_block_offset == self.now_block.split_nums:
             self.now_block = self.select_block()
@@ -149,6 +157,7 @@ class Appication_Layer(object):
         return packet
 
     def update_block_status(self, packet):
+        """update the block finishing status according to the acknowledge packets pushed from sender."""
         block_id = packet.block_info["Block_id"]
         # filter repeating acked packet
         if block_id in self.ack_blocks and   \
@@ -168,18 +177,18 @@ class Appication_Layer(object):
         else:
             self.ack_blocks[block_id].append(packet.offset)
 
-        if self.is_sended_block(block_id):
+        if self.is_sent_block(block_id):
             self.blocks_status[block_id].finish_timestamp = packet.finish_time
             self.log_block(self.blocks_status[block_id])
 
     def log_block(self, block):
-
+        """logging the finished blocks or the blocks with missing deadline"""
         if self.fir_log:
             self.fir_log = False
             with open("output/block.log", "w") as f:
                 pass
 
-        if not self.is_sended_block(block.block_id):
+        if not self.is_sent_block(block.block_id):
             block.finish_timestamp = self.init_time + self.pass_time
         if block.is_miss_ddl():
             block.miss_ddl = 1
@@ -187,13 +196,15 @@ class Appication_Layer(object):
         with open("output/block.log", "a") as f:
             f.write(json.dumps(block.trans2dict())+'\n')
 
-    def is_sended_block(self, block_id):
+    def is_sent_block(self, block_id):
+        """check whether or not the block with the id of "block_id" is finished."""
         if block_id in self.ack_blocks and \
                 len(self.ack_blocks[block_id]) == self.blocks_status[block_id].split_nums:
             return True
         return False
 
     def close(self):
+        """do some operations when system is closing, like logging the blocks with the packets that have not been acked or sent."""
         for block_id, packet_list in self.ack_blocks.items():
             if self.is_sended_block(block_id):
                 continue

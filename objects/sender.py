@@ -49,10 +49,12 @@ class Sender():
         return result
 
     def init_application(self, block_file):
+        """initial the sender's application which will send packet to it."""
         self.application = Appication_Layer(block_file, bytes_per_packet=BYTES_PER_PACKET)
 
     @measure_time()
     def new_packet(self, cur_time, mode):
+        """get new packet from it's application."""
         packet = self.application.get_next_packet(cur_time, mode)
         if packet:
             packet.send_delay = 1 / self.rate
@@ -60,7 +62,7 @@ class Sender():
         return packet
 
     def clear_miss_ddl(self, cur_time):
-
+        """pop these packets with missing deadline at time of "cur_time"."""
         for idx in range(len(self.wait_for_select_packets)-1, -1, -1):
             item = self.wait_for_select_packets[idx]
             if item.is_miss_ddl(cur_time):
@@ -68,6 +70,14 @@ class Sender():
 
     @measure_time()
     def select_packet(self, cur_time):
+        """
+        select the packet that will be sent at time of "cur_time".
+        Firstly, we will add all new packet from application that can be sent now.
+        Secondly, if ENABLE_HASH_CHECK is True, we will do some safe check which will cost so much time.
+        Thirdly, we will call your algorithm for packet selection and get the index that the packet will be sent now.
+        :param cur_time:
+        :return:
+        """
         while True:
             # if there is no packet can be sended, we need to send packet that created after cur_time
             packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) == 0 else None)
@@ -106,6 +116,12 @@ class Sender():
             self.set_cwnd(self.cwnd / (1.0 - delta))
 
     def can_send_packet(self):
+        """
+        check it that can send packet now if your congestion control is based windows.
+        Firstly, we will call the funtion of "make_decision" in your solution and get rate, cwnd, extra.
+        Then, we will update sender according to your parameters.
+        :return: Boolean.
+        """
         ret = self.solution.make_decision()
         self.rate = ret["send_rate"] if "send_rate" in ret else self.rate
         self.cwnd = ret["cwnd"] if "cwnd" in ret else self.cwnd
@@ -119,6 +135,12 @@ class Sender():
         self.net = net
 
     def on_packet_sent(self, cur_time):
+        """
+        some operation when packet is sent successfully out of sender.
+        Like updating the inflight numbers and calculation pacing delay.
+        :param cur_time: type float.
+        :return: pacing delay and extra information that can be attached to packet.
+        """
         self.sent += 1
         self.bytes_in_flight += BYTES_PER_PACKET
 
@@ -128,6 +150,12 @@ class Sender():
         return max(old_time-cur_time, .0), self.extra
 
     def on_packet_acked(self, rtt, packet):
+        """
+        some operation when packet acknowledged successfully at sender.
+        Like updating the numbers of acked and inflight and push the acked information to it's application.
+        :param rtt: round-trip-time
+        :param packet: type Packet.
+        """
         self.acked += 1
         self.rtt_samples.append(rtt)
         if (self.min_latency is None) or (rtt < self.min_latency):
@@ -136,6 +164,12 @@ class Sender():
         self.application.update_block_status(packet)
 
     def on_packet_lost(self, event_time, packet):
+        """
+        some operation when packet lost at sender.
+        Like updating the numbers of lost and inflight and do the retranssmition.
+        :param event_time: type float.
+        :param packet:
+        """
         self.lost += 1
         self.bytes_in_flight -= BYTES_PER_PACKET
         # do retrans if lost
@@ -159,6 +193,7 @@ class Sender():
             self.cwnd = MIN_CWND
 
     def get_waiting_ack_nums(self):
+        """get the numbers of inflight."""
         return int(self.bytes_in_flight) // BYTES_PER_PACKET
 
     def record_run(self):

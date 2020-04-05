@@ -9,9 +9,9 @@ class Packet(object):
                  packet_id=None,
                  packet_size=1500,
                  packet_type="S",
-                 drop = False,
+                 drop=False,
                  send_delay=.0,
-                 pacing_delay = .0,
+                 pacing_delay=.0,
                  latency=.0,
                  block_info={}
                  ):
@@ -67,7 +67,7 @@ class Packet(object):
         return print_data
 
     def create_retrans_packet(self, cur_time):
-
+        """create a new packet for retransmission."""
         return Packet(create_time=cur_time,
                       next_hop=0,
                       offset=self.offset,
@@ -76,6 +76,7 @@ class Packet(object):
                       block_info=self.block_info)
 
     def get_hash_val(self):
+        """get the hash value of this packet according to it's member variables."""
         tmp = self.trans2dict()
         MOD = 1234567891
         ret = 0

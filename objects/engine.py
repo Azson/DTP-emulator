@@ -19,6 +19,7 @@ class Engine():
         self.last_alert_time = 0
 
     def queue_initial_packets(self):
+        """initial the packet queue in network"""
         for sender in self.senders:
             sender.register_network(self)
             sender.reset_obs()
@@ -37,6 +38,7 @@ class Engine():
         return self.cur_time
 
     def run_for_dur(self, dur):
+        """run the system for time of "dur". """
         end_time = self.cur_time + dur
         for sender in self.senders:
             sender.reset_obs()
@@ -153,14 +155,17 @@ class Engine():
         return reward * REWARD_SCALE
 
     def log_packet(self, event_time, sender, packet):
-        '''
-        packet is tuple of (event_time, sender, event_type, next_hop, cur_latency, dropped, packet_id, life)
-        :param packet: tuple
-        :return: Packet
-        '''
+        """
+        log the event information.
+        :param event_time: the time happened this event.
+        :param sender: the sender sent this packet.
+        :param packet: type Packet.
+        """
         if not constant.ENABLE_LOG:
             return packet
+
         def get_true_log_file():
+            """if the rows of single log file is limited to MAX_PACKET_LOG_ROWS, find the name of next new log file."""
             if isinstance(constant.MAX_PACKET_LOG_ROWS, int) and constant.MAX_PACKET_LOG_ROWS > 0:
                 file_nums = self.log_items // constant.MAX_PACKET_LOG_ROWS
                 if self.log_items and self.log_items % constant.MAX_PACKET_LOG_ROWS == 0:
@@ -195,7 +200,7 @@ class Engine():
         return packet
 
     def append_cc_input(self, event_time, sender, packet, event_type="packet"):
-
+        """push the acked or lost packet event to it's sender"""
         if event_type == "packet":
             data = {
                 "event_time" : event_time,
@@ -216,6 +221,7 @@ class Engine():
             sender.pacing_rate = feed_back["pacing_rate"] if "pacing_rate" in feed_back else sender.pacing_rate
 
     def close(self):
+        """close all the application before closing this system."""
         print("Time {}s : There is no packet from application~".format(self.cur_time))
         for sender in self.senders:
             debug_print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
