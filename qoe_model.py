@@ -64,10 +64,10 @@ if __name__ == '__main__':
 
     x = 0
     qoes = {}
-    for i in range(1, 100, 2):
+    for i in range(1, 100):
         x = i / 100
         arr = []
-        for j in range(1, 10):
+        for j in range(1, 101):
             trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
             qoe_distance = cal_distance(block_file, trace_file, x)
             arr.append(qoe_distance)
