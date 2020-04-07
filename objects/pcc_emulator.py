@@ -91,6 +91,12 @@ class PccEmulator(object):
         #self.senders = [Sender(0.3 * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         #self.senders = [Sender(random.uniform(0.2, 0.7) * bw, [self.links[0], self.links[1]], 0, self.history_len)]
         solution = Aitrans_solution() if not self.solution else self.solution
+        # support change type of cc by aitrans solution
+        try:
+            if solution.USE_CWND is False:
+                constant.USE_CWND = False
+        except Exception as e:
+            pass
         self.senders = [W_sender(self.links, 0, self.features,
                                history_len=self.history_len, solution=solution)]
         for item in self.senders:

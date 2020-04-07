@@ -9,6 +9,7 @@ class MTR(CongestionControl):
         super(MTR, self).__init__()
         self.trace_list = []
         self.init_trace()
+        self.USE_CWND = False
 
     def init_trace(self):
         with open("config/trace.txt", 'r') as f:
