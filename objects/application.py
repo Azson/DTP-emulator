@@ -206,7 +206,7 @@ class Appication_Layer(object):
     def close(self):
         """do some operations when system is closing, like logging the blocks with the packets that have not been acked or sent."""
         for block_id, packet_list in self.ack_blocks.items():
-            if self.is_sended_block(block_id):
+            if self.is_sent_block(block_id):
                 continue
             debug_print("block {} not finished!".format(block_id))
             self.log_block(self.blocks_status[block_id])
