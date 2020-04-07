@@ -133,7 +133,7 @@ class BBR(Reno):
             cwnd_gain = 1
         return pacing_gain, cwnd_gain
 
-    def make_decision(self):
+    def make_decision(self, cur_time):
         self.call_nums += 1
 
         output = {

@@ -71,7 +71,7 @@ class Engine():
                         # print("Packet lost at time %f" % self.cur_time)
                     else:
                         # may acked packet which is not in window after packet loss
-                        sender.on_packet_acked(cur_latency, packet)
+                        sender.on_packet_acked(packet.get_rtt(), packet)
                         # print("Packet acked at time %f" % self.cur_time)
                     # for windows-based cc
                     if constant.USE_CWND:
@@ -91,7 +91,7 @@ class Engine():
             if event_type == EVENT_TYPE_SEND:
                 if next_hop == 0:
                     # print("Packet sent at time %f" % self.cur_time)
-                    if sender.can_send_packet():
+                    if sender.can_send_packet(new_event_time):
                         pacing_time, extra_info = sender.on_packet_sent(new_event_time)
                         packet.pacing_delay += pacing_time
                         packet.extra = extra_info
@@ -101,7 +101,7 @@ class Engine():
                     # when do the packet create ? before or after pacing ?
                     _packet = sender.select_packet(new_event_time + (1.0 / sender.rate)) # new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
-                        heapq.heappush(sender.wait_for_push_packets, [event_time, sender, _packet])
+                        heapq.heappush(sender.wait_for_push_packets, [new_event_time, sender, _packet])
                         if not constant.USE_CWND or int(sender.cwnd) > 1+len(self.q):
                             item = heapq.heappop(sender.wait_for_push_packets)
                             heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \

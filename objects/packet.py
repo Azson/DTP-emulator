@@ -48,6 +48,9 @@ class Packet(object):
                 self.drop,
                 self.packet_id]
 
+    def get_rtt(self):
+        return self.pacing_delay+self.latency
+
     def trans2dict(self):
         print_data = {
             "Type": self.packet_type,

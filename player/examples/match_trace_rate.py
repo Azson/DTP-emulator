@@ -24,7 +24,8 @@ class MTR(CongestionControl):
                 break
             self.send_rate = self.trace_list[i][1] * 10**6 / BYTES_PER_PACKET
 
-    def make_decision(self):
+    def make_decision(self, cur_time):
+        self.update_trace(cur_time)
         output = {
             "send_rate" : self.send_rate
         }
