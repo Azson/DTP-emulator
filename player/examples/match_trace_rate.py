@@ -8,11 +8,10 @@ class MTR(CongestionControl):
     def __init__(self):
         super(MTR, self).__init__()
         self.trace_list = []
-        self.init_trace()
         self.USE_CWND = False
 
-    def init_trace(self):
-        with open("config/trace.txt", 'r') as f:
+    def init_trace(self, trace_file):
+        with open(trace_file, 'r') as f:
             for line in f.readlines():
                 self.trace_list.append(list(
                     map(lambda x: float(x), line.split(","))

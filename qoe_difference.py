@@ -38,10 +38,12 @@ def cal_distance(block_file, trace_file, x):
     emulator2.run_for_dur(float("inf"))
     bbr_qoe = cal_qoe(x)
 
+    tmp = s3()
+    tmp.init_trace(trace_file)
     emulator3 = PccEmulator(
         block_file=block_file,
         trace_file=trace_file,
-        solution=s3(),
+        solution=tmp,
         USE_CWND=False
     )
     emulator3.run_for_dur(float("inf"))
