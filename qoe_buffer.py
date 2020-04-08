@@ -7,6 +7,7 @@ import os, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
+from config import constant
 
 from qoe_difference import cal_distance, plt_qoe
 
@@ -23,7 +24,7 @@ if __name__ == '__main__':
     reno_arr = []
     bbr_arr = []
     for j in range(10, 60):
-        MAX_QUEUE = MIN_QUEUE = j
+        constant.MAX_QUEUE = constant.MIN_QUEUE = j
         qoe_difference = cal_distance(block_file, trace_file, x)
         reno_arr.append(qoe_difference[0])
         bbr_arr.append(qoe_difference[1])
