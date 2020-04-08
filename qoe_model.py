@@ -30,6 +30,7 @@ def cal_qoe(x):
             urgency.append(1)
         else:
             urgency.append(0)
+            priorities[-1] *= -1
     for i in range(len(urgency)):
         qoe += x * priorities[i] + (1 - x) * urgency[i]
     return qoe
@@ -64,10 +65,10 @@ if __name__ == '__main__':
 
     x = 0
     qoes = {}
-    for i in range(1, 100):
+    for i in range(1, 100, 5):
         x = i / 100
         arr = []
-        for j in range(1, 101):
+        for j in range(1, 101, 5):
             trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
             qoe_distance = cal_distance(block_file, trace_file, x)
             arr.append(qoe_distance)
