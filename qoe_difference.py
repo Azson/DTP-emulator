@@ -66,9 +66,10 @@ if __name__ == '__main__':
         bbr_arr.append(qoe_difference[1])
 
     plt_qoe(reno_arr, bbr_arr, pic, idx, size)
-
+    MIN_QUEUE = MAX_QUEUE = queue_size = 55
     with open("qoemodel/qoe_difference.log","w+") as f:
-        strs = ["trace numbers : 50\n", "buffer: MAX_QUEUE = 50, MIN_QUEUE = 50\n",
+        strs = ["trace numbers : 50\n", "buffer: MAX_QUEUE = MIN_QUEUE = "+
+                str(queue_size) + "\n",
                 "bw : 0.1 ~ 2 MB \n",
                 "qoe = " + str(x) + " * priority + "+ str(1 - x) + " * deadline\n",
                 str(reno_arr) + "\n",
