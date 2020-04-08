@@ -1,7 +1,5 @@
 from config.constant import *
-from objects.cc_base import CongestionControl
 from player.examples.reno import Reno
-import random
 
 
 class BBR(Reno):
@@ -62,7 +60,7 @@ class BBR(Reno):
 
     def append_bw(self, now_bw):
         self.bw_windows.append(now_bw)
-        # keep the latest 10 bbr_bw_rtts bw
+        # keep the latest 10 bw
         if len(self.bw_windows) > self.bbr_bw_rtts:
             self.bw_windows.pop(0)
 
@@ -79,12 +77,6 @@ class BBR(Reno):
         scale2 = (bws[2] - bws[1]) / bws[1]
         scale3 = (bws[3] - bws[2]) / bws[2]
         return scale1 < thresh and scale2 < thresh and scale3 < thresh
-
-    # def swto_probe_rtt(self):
-    #     for time_rtt in self.ten_sec_wnd:
-    #         if time_rtt[1] <= self.minrtt:
-    #             return False
-    #     return True
 
     def update_min_rtt(self, event_time):
         # making sure the rtt data is in 10s
@@ -105,10 +97,10 @@ class BBR(Reno):
         return  True
 
     def set_output(self, mode):
-        # pacing_gain, cwnd_gain = self.cal_gain(mode)
+
         # it seems that there is a minest pacing rate
         # ref : https://code.woboq.org/linux/linux/net/ipv4/tcp_bbr.c.html#259
-        # print(self.maxbw, self.minrtt)
+
         self.pacing_rate = self.pacing_gain * self.maxbw
         self.cwnd = max(self.maxbw * self.minrtt * self.cwnd_gain, 4)
 
@@ -212,6 +204,5 @@ class BBR(Reno):
                 self.ten_sec_wnd = self.ten_sec_wnd[-1:]
             # update gains
             self.pacing_gain, self.cwnd_gain = self.cal_gain(self.mode)
-            # when we should calculate pacing and cwnd ?
             self.set_output(self.mode)
-            # print(self.cwnd, self.cwnd_gain, self.pacing_rate, self.pacing_gain)
+ 

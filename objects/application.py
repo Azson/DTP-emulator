@@ -10,7 +10,7 @@ class Appication_Layer(object):
 
     def __init__(self,
                  block_file,
-                 create_det=1,
+                 create_det=0.5,
                  bytes_per_packet=1500):
         self.block_file = block_file
         self.block_queue = []
