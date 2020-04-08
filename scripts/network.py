@@ -115,14 +115,14 @@ def create_trace(change_scale=5, unchanged=4, cov=0.2, time_length=50, min_bitra
     return bitrates
 
 def create_network(row, length, min_bitrate, max_bitrate):
-    for idx in range(length):
+    for idx in range(50, 50 + length, 2):
         trace_list = []
         cs = random.randint(3, 10)
         uc = random.randint(3, 6)
         cv = random.uniform(0, 1)
         bw = create_trace(change_scale=cs, unchanged=uc, cov=cv, time_length=row, min_bitrate = min_bitrate, max_bitrate = max_bitrate)
         for i in range(row):
-            trace_list.append([i , bw.pop(), 0.01, 0.001])
+            trace_list.append([i , bw.pop(), 0, 0.001])
         with open("first_group/traces_"+str(idx + 1)+".txt", "w+") as f:
             for i in range(len(trace_list)):
                 for j in range(3):
@@ -131,4 +131,4 @@ def create_network(row, length, min_bitrate, max_bitrate):
 
 
 if __name__ == "__main__":
-    create_network(50, 50, 0.2, 2)
+    create_network(50, 50, 1, 4)
