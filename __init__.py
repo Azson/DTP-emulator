@@ -12,9 +12,14 @@ from player.packet_selection import Solution as Packet_selection
 from utils import *
 from config.constant import *
 
+from player.examples.reno import Reno
+from player.examples.simple_bbr import BBR
+from player.examples.RL import RL
 
-__all__ = ["PccEmulator", "CongestionControl", "Packet_selection", "emulator", "analyze_pcc_emulator",
-           "plot_cwnd", "plot_throughput"]
+
+__all__ = ["PccEmulator", "CongestionControl", "Packet_selection", "emulator",  \
+           "analyze_pcc_emulator", "plot_cwnd", "plot_throughput", \
+           "Reno", "BBR", "RL"]
 
 block_file = parentdir+"/simple_emulator"+"/config/block.txt"
 trace_file = parentdir+"/simple_emulator"+"/config/trace.txt"
