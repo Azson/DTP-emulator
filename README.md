@@ -42,6 +42,8 @@ emulator = PccEmulator(solution=my_solution)
 emulator.run_for_dur()
 ```
 
+Here is an complete  [demo](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/demo_1.py) about the using of pypi.
+
 ## For this repository
 
 For players, you need to finish the code both of  "congestion_control_algorithm.py" 
@@ -53,6 +55,8 @@ By default the congestion control is "reno" and block selection algorithm is sel
 Then, just run the order "python3 main.py".
 
 You will get some output in the path "/output/" and should fix your code according to the output.
+
+Here is an complete  [demo](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/deom_2.py) about the using of pypi.
 
 # For Detail
 
@@ -75,6 +79,8 @@ and Solution in congestion_control_algorithm.py and overwrite there methods.
 
 In this module, you have to implement the function "select_packet" with the parameters "cur_time, packet_queue" and return an integer value which means the packet index in packet queue, which will be sent at the time "cur_time".
 
+Here we provided a [example](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/player/packet_selection.py) of selecting packet by the **create time** firstly, and **radio of rest life time to deadline** secondly.
+
 #### select_packet
 
 For every packet in packet queue, it's implement in "objects/packet.py". But we recommend you to get more information at  [Packet](#packet-log) .
@@ -82,6 +88,9 @@ For every packet in packet queue, it's implement in "objects/packet.py". But we 
 ### congestion_control_algorithm.py
 
 In this module, you have to implement a class with member function "make_decision" and "append_input". So we recommend you to accomplish this by inheriting from the object of "CongestionControl" implemented in "cc_base.py" in case you forget these. 
+
+Here we provided some simple algorithms about congestion control to help you being familiar with this competition.
+Like [Reno](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/player/examples/reno.py), [BBR](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/player/examples/simple_bbr.py) and an example about [reinforcement learning](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/player/examples/RL.py) implemented by tensorflow.
 
 #### make_decision
 
@@ -300,7 +309,7 @@ We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also c
 
 # Todo list
 
-- [ x ] Add BBR congestion control module.
-- [ ] Add AI congestion control module.
+- [x] Add BBR congestion control module.
+- [x] Add AI congestion control module.
 - [ ] Add QOE mudule.
 - [ ] Add system presentation PPT.
