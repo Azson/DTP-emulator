@@ -50,8 +50,8 @@ def cal_distance(block_file, trace_file, x):
     mtr_qoe = cal_qoe(x)
     return [reno_qoe, bbr_qoe, mtr_qoe]
 
-def plt_qoe(reno_arr, bbr_arr, pic, xidx, size, mtr_arr=None):
-    x = np.linspace(1, 100, size)
+def plt_qoe(reno_arr, bbr_arr, pic, xidx, size, start, end, mtr_arr=None):
+    x = np.linspace(start, end, size)
     fig, ax = plt.subplots()
     ax.plot(x,reno_arr, color="blue", label="reno_qoe")
     ax.plot(x, bbr_arr, color="red", label="bbr_qoe")
@@ -69,24 +69,24 @@ if __name__ == '__main__':
     log_file = "output/pcc_emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
     pic = "qoemodel/qoe_difference.png"
-    idx,size = "trace_index",10
-    x = 0.9
+    idx,size = "trace_index",60
+    x = 0.85
     reno_arr = []
     bbr_arr = []
     mtr_arr = []
-    for j in range(1, 101, 10):
+    for j in range(1, 121, 2):
         trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
         qoe_difference = cal_distance(block_file, trace_file, x)
         reno_arr.append(qoe_difference[0])
         bbr_arr.append(qoe_difference[1])
         mtr_arr.append(qoe_difference[2])
 
-    plt_qoe(reno_arr, bbr_arr, pic, idx, size, mtr_arr)
+    plt_qoe(reno_arr, bbr_arr, pic, idx, size, 1, 121, mtr_arr)
     MIN_QUEUE = MAX_QUEUE = queue_size = 55
     with open("qoemodel/qoe_difference.log","w+") as f:
-        strs = ["trace numbers : 50\n", "buffer: MAX_QUEUE = MIN_QUEUE = "+
+        strs = ["trace numbers : 60\n", "buffer: MAX_QUEUE = MIN_QUEUE = "+
                 str(queue_size) + "\n",
-                "bw : 0.1 ~ 2 MB \n",
+                "bw : 1 ~ 12 MB \n",
                 "qoe = " + str(x) + " * priority + "+ str(1 - x) + " * deadline\n",
                 str(reno_arr) + "\n",
                 str(bbr_arr)]

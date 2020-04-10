@@ -68,7 +68,7 @@ if __name__ == '__main__':
     for i in range(1, 100, 3):
         x = i / 100
         arr = []
-        for j in range(1, 101):
+        for j in range(1, 121):
             trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
             qoe_distance = cal_distance(block_file, trace_file, x)
             arr.append(qoe_distance)
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     best_x = max(qoes, key=qoes.get)
     with open("qoemodel/qoe_model.log","w+") as f:
         f.write(str(qoes) + '\n')
-        f.write(str(best_x) + " * priority + " + str(1 - best_x) + " * ddl " )
+        f.write(str(best_x) + " * priority + " + str(1 - best_x) + " * whether_miss_ddl " )
 
 
 
