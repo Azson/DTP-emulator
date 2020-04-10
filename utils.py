@@ -44,7 +44,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
 
-    plt_data = list(filter(lambda x:x["Type"]=='A' and x["Position"] == 2, plt_data))
+    plt_data = list(filter(lambda x:x["Type"]=='A' and x["Position"] == 2 and x["Sender_id"] == 2, plt_data))
     if time_range:
         plt_data = time_filter(plt_data, time_range)
     # priority by packet id
@@ -169,7 +169,7 @@ def get_packet_type(sender, packet):
     if packet.drop:
         return PACKET_TYPE_DROP
     if packet.packet_type == EVENT_TYPE_ACK and \
-        packet.next_hop == len(sender.path):
+            packet.next_hop == len(sender.path):
         return PACKET_TYPE_FINISHED
 
     return PACKET_TYPE_TEMP
@@ -219,7 +219,7 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
     # filter the packet at sender
-    plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0, plt_data))
+    plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0 and x["Sender_id"] == 2, plt_data))
     # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
     # filter by the time
     if time_range:

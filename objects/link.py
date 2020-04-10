@@ -10,6 +10,7 @@ class Link():
         :param trace_list: [[time, bandwith, loss_rate, delay] ...]
         :param queue_size:
         """
+        self.id = Link._get_next_id()
         self.trace_list = trace_list
         if len(trace_list) == 0:
             self.bandwith = np.inf
@@ -27,6 +28,14 @@ class Link():
         self.extra_delay = 0
         self.queue_size = queue_size
         self.trace_start_id = 0
+
+    _next_id = 1
+
+    @classmethod
+    def _get_next_id(cls):
+        result = Link._next_id
+        Link._next_id += 1
+        return result
 
     def get_cur_queue_delay(self, event_time):
         return max(0.0, self.queue_delay - (event_time - self.queue_delay_update_time))
@@ -81,7 +90,7 @@ class Link():
         return transmition_time
 
     def print_debug(self):
-        print("Link:")
+        print("Link: %d" % self.id)
         print("Bandwidth: %f" % self.bandwith)
         print("Delay: %f" % self.delay)
         print("Queue Delay: %f" % self.queue_delay)

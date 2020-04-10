@@ -40,6 +40,15 @@ class Packet(object):
         cls._packet_id += 1
         return result
 
+    @classmethod
+    def create_normal_packet(cls, cur_time, **kwargs):
+        return Packet(
+                    create_time=cur_time,
+                    next_hop=0,
+                    offset=-1,
+                    packet_size=kwargs["packet_size"],
+                    payload=-1)
+
     def parse(self):
 
         return [self.packet_type,

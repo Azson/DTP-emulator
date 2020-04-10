@@ -10,8 +10,11 @@ class Appication_Layer(object):
 
     def __init__(self,
                  block_file,
-                 create_det=0.5,
-                 bytes_per_packet=1500):
+                 create_det=1,
+                 bytes_per_packet=1500,
+                 **kwargs):
+        self.extra = {}
+        self.update_config(kwargs)
         self.block_file = block_file
         self.block_queue = []
         self.bytes_per_packet = bytes_per_packet
@@ -29,6 +32,9 @@ class Appication_Layer(object):
         self.handle_block(block_file)
         self.ack_blocks = dict()
         self.blocks_status = dict()
+
+    def update_config(self, extra):
+        self.extra["ENABLE_BLOCK_LOG"] = extra["ENABLE_BLOG_LOG"] if "ENABLE_BLOCK_LOG" in extra else True
 
     def handle_block(self, block_file):
         """
@@ -183,6 +189,8 @@ class Appication_Layer(object):
 
     def log_block(self, block):
         """logging the finished blocks or the blocks with missing deadline"""
+        if not self.extra["ENABLE_BLOCK_LOG"]:
+            return
         if self.fir_log:
             self.fir_log = False
             with open("output/block.log", "w") as f:
