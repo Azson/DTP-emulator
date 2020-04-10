@@ -43,7 +43,11 @@ class PccEmulator(object):
         self.senders = None
         self.solution = solution
         self.trace_list = None
-        self.create_new_links_and_senders()
+        if "senders" in kwargs and "links" in kwargs:
+            self.senders = kwargs["sender"]
+            self.links = self.links
+        else:
+            self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
 
     def update_config(self, extra):

@@ -26,6 +26,7 @@ class Engine():
             packet = sender.select_packet(1.0 / sender.rate) # sender.new_packet(1.0 / sender.rate)
             if packet:
                 heapq.heappush(self.q, (1.0 / sender.rate, sender, packet))
+            print(len(self.q))
 
     def reset(self):
         self.cur_time = 0.0
@@ -74,8 +75,8 @@ class Engine():
                         sender.on_packet_acked(packet.get_rtt(), packet)
                         # print("Packet acked at time %f" % self.cur_time)
                     # for windows-based cc
-                    if constant.USE_CWND:
-                        for _packet in sender.slide_windows(self.cur_time, len(self.q)):
+                    if sender.USE_CWND:
+                        for _packet in sender.slide_windows(self.cur_time, sender.get_waiting_ack_nums()):
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
 
@@ -97,12 +98,13 @@ class Engine():
                         packet.extra = extra_info
                         push_new_event = True
                     else:
-                        sender.wait_for_push_packets.append([event_time, sender, packet])
+                        if sender.application:
+                            sender.wait_for_push_packets.append([event_time, sender, packet])
                     # when do the packet create ? before or after pacing ?
                     _packet = sender.select_packet(new_event_time + (1.0 / sender.rate)) # new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
                         heapq.heappush(sender.wait_for_push_packets, [new_event_time, sender, _packet])
-                        if not constant.USE_CWND or int(sender.cwnd) > 1+len(self.q):
+                        if not sender.USE_CWND or int(sender.cwnd) > 1+sender.get_waiting_ack_nums():
                             item = heapq.heappop(sender.wait_for_push_packets)
                             heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \
                                                     item[1], item[2]))
@@ -161,6 +163,7 @@ class Engine():
         :param sender: the sender sent this packet.
         :param packet: type Packet.
         """
+        # only log the first sender when ENABLE_LOG=True
         if not constant.ENABLE_LOG:
             return packet
 
@@ -186,7 +189,8 @@ class Engine():
 
         log_data = {
             "Time" : event_time,
-            "Waiting_for_ack_nums" : sender.get_waiting_ack_nums()
+            "Waiting_for_ack_nums" : sender.get_waiting_ack_nums(),
+            "Sender_id" : sender.id
         }
         log_data.update(packet.trans2dict())
         if constant.USE_CWND:
@@ -225,4 +229,5 @@ class Engine():
         print("Time {}s : There is no packet from application~".format(self.cur_time))
         for sender in self.senders:
             debug_print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
-            sender.application.close()
+            if sender.application:
+                sender.application.close()

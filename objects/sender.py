@@ -2,6 +2,7 @@ from config.constant import *
 from common import sender_obs
 from utils import check_solution_format, measure_time
 from objects.application import Appication_Layer
+from objects.packet import Packet
 from config import constant
 
 
@@ -27,6 +28,7 @@ class Sender():
         self.solution = solution
         ret = check_solution_format(self.solution.make_decision(0))
         self.rate = ret["send_rate"] if "send_rate" in ret else float("inf")
+        self.USE_CWND = self.solution.USE_CWND if hasattr(self.solution, "USE_CWND") else True
         # Not use this if USE_CWND=FALSE
         self.cwnd = ret["cwnd"] if "cwnd" in ret else 25
         self.starting_rate = self.rate
@@ -48,14 +50,17 @@ class Sender():
         Sender._next_id += 1
         return result
 
-    def init_application(self, block_file):
+    def init_application(self, block_file, **kwargs):
         """initial the sender's application which will send packet to it."""
-        self.application = Appication_Layer(block_file, bytes_per_packet=BYTES_PER_PACKET)
+        self.application = Appication_Layer(block_file, bytes_per_packet=BYTES_PER_PACKET, **kwargs)
 
     @measure_time()
     def new_packet(self, cur_time, mode):
         """get new packet from it's application."""
-        packet = self.application.get_next_packet(cur_time, mode)
+        if self.application:
+            packet = self.application.get_next_packet(cur_time, mode)
+        else:
+            packet = Packet.create_normal_packet(cur_time, packet_size=constant.BYTES_PER_PACKET)
         if packet:
             packet.send_delay = 1 / self.rate
 
@@ -84,6 +89,9 @@ class Sender():
             if not packet:
                 break
             self.wait_for_select_packets.append(packet)
+            # for multi flow
+            if self.application is None:
+                break
         # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
         # self.clear_miss_ddl(cur_time)
         if constant.ENABLE_HASH_CHECK:
@@ -161,7 +169,8 @@ class Sender():
         if (self.min_latency is None) or (rtt < self.min_latency):
             self.min_latency = rtt
         self.bytes_in_flight -= BYTES_PER_PACKET
-        self.application.update_block_status(packet)
+        if self.application:
+            self.application.update_block_status(packet)
 
     def on_packet_lost(self, event_time, packet):
         """
@@ -232,7 +241,7 @@ class Sender():
         self.obs_start_time = self.net.get_cur_time()
 
     def print_debug(self):
-        print("Sender:")
+        print("Sender: %d" % (self.id))
         print("Obs: %s" % str(self.get_obs()))
         print("Rate: %f" % self.rate)
         print("Sent: %d" % self.sent)
