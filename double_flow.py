@@ -42,7 +42,7 @@ class NormalSolution(CongestionControl, PacketSelection):
 
     def make_decision(self, cur_time):
         return {
-            "send_rate": 100
+            "send_rate": 1000
         }
 
 
@@ -71,10 +71,9 @@ if __name__ == '__main__':
     emulator.senders = [sender_1, sender_2]
     emulator.net = Engine(emulator.senders, emulator.links)
 
-    print(emulator.run_for_dur(35))
+    print(emulator.run_for_dur(20))
     emulator.dump_events_to_file(log_file)
     emulator.print_debug()
-    print(emulator.senders[0].rtt_samples)
     print(emulator.senders[0].application.ack_blocks)
     analyze_pcc_emulator(log_packet_file, file_range="all")
     plot_cwnd(log_packet_file, trace_file=trace_file, file_range="all")

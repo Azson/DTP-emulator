@@ -76,6 +76,7 @@ class Engine():
                         # print("Packet acked at time %f" % self.cur_time)
                     # for windows-based cc
                     if sender.USE_CWND:
+                        # continue ack may use same inflight numbers which will be limited to cwnd but redundancy in log
                         for _packet in sender.slide_windows(self.cur_time, sender.get_waiting_ack_nums()):
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
