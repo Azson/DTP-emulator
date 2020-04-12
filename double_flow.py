@@ -17,6 +17,7 @@ from objects.engine import Engine
 
 from player.examples.reno import Reno
 from player.examples.simple_bbr import BBR
+from player.examples.match_trace_rate import MTR
 from player.packet_selection import Solution as PacketSelection
 from objects.cc_base import CongestionControl
 
@@ -34,16 +35,38 @@ class RenoSolution(Reno, PacketSelection):
     pass
 
 
-class NormalSolution(CongestionControl, PacketSelection):
+class NormalSolution(MTR, PacketSelection):
+    pass
+    # def __init__(self):
+    #     super().__init__()
+    #     self.send_rate = 100
+    #     self.USE_CWND = False
+    #
+    # def make_decision(self, cur_time):
+    #     return {
+    #         "send_rate": self.send_rate
+    #     }
 
-    def __init__(self):
-        super().__init__()
-        self.USE_CWND = False
 
-    def make_decision(self, cur_time):
-        return {
-            "send_rate": 1000
-        }
+def create_2flow_emulator(solution, block_file, trace_file):
+
+    emulator = PccEmulator(
+        block_file=block_file,
+        trace_file=trace_file
+    )
+    solution_1 = solution
+    sender_1 = WinSender(emulator.links, 0, emulator.features, history_len=emulator.history_len, solution=solution_1)
+    sender_1.init_application(emulator.block_file)
+
+    solution_2 = NormalSolution()
+    solution_2.init_trace(trace_file)
+    sender_2 = WinSender(emulator.links, 0, emulator.features, history_len=emulator.history_len, solution=solution_2)
+    # sender_2.init_application(emulator.block_file, ENABLE_BLOCK_LOG=False)
+
+    emulator.senders = [sender_1, sender_2]
+    emulator.net = Engine(emulator.senders, emulator.links)
+
+    return emulator
 
 
 if __name__ == '__main__':
@@ -56,25 +79,12 @@ if __name__ == '__main__':
     new_trace_file = "scripts/first_group/traces_1.txt"
     new_block_files = ["config/data_video.csv", "config/data_audio.csv"]
 
-    emulator = PccEmulator(
-        block_file=block_file,
-        trace_file=trace_file
-    )
-    solution_1 = BbrSolution()
-    sender_1 = WinSender(emulator.links, 0, emulator.features, history_len=emulator.history_len, solution=solution_1)
-    sender_1.init_application(emulator.block_file)
-
-    solution_2 = NormalSolution()
-    sender_2 = WinSender(emulator.links, 0, emulator.features, history_len=emulator.history_len, solution=solution_2)
-    # sender_2.init_application(emulator.block_file, ENABLE_BLOCK_LOG=False)
-
-    emulator.senders = [sender_1, sender_2]
-    emulator.net = Engine(emulator.senders, emulator.links)
+    emulator = create_2flow_emulator(RenoSolution(), block_file, trace_file)
 
     print(emulator.run_for_dur(20))
     emulator.dump_events_to_file(log_file)
     emulator.print_debug()
     print(emulator.senders[0].application.ack_blocks)
-    analyze_pcc_emulator(log_packet_file, file_range="all")
-    plot_cwnd(log_packet_file, trace_file=trace_file, file_range="all")
+    # analyze_pcc_emulator(log_packet_file, file_range="all")
+    # plot_cwnd(log_packet_file, trace_file=trace_file, file_range="all")
     # plot_throughput(log_packet_file, trace_file=trace_file, file_range="all")

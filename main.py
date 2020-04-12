@@ -17,6 +17,10 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
+from player.aitrans_solution import Solution as s1
+from player.aitrans_solution2 import Solution as s2
+from player.aitrans_3 import Solution as s3
+
 
 if __name__ == '__main__':
 

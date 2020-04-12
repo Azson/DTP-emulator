@@ -18,15 +18,36 @@ from player.aitrans_solution2 import Solution as s2
 from player.aitrans_3 import Solution as s3
 
 from qoe_model import cal_qoe
+from double_flow import create_2flow_emulator
 
-def cal_distance(block_file, trace_file, x):
+
+def cal_distance_double(block_file, trace_file, x):
+
+    emulator1 = create_2flow_emulator(s1(), block_file, trace_file)
+    emulator1.run_for_dur(21)
+    reno_qoe = cal_qoe(x)
+
+    emulator2 = create_2flow_emulator(s2(), block_file, trace_file)
+    emulator2.run_for_dur(21)
+    bbr_qoe = cal_qoe(x)
+
+    tmp = s3()
+    tmp.init_trace(trace_file)
+    emulator3 = create_2flow_emulator(tmp, block_file, trace_file)
+    emulator3.run_for_dur(21)
+    mtr_qoe = cal_qoe(x)
+
+    return [reno_qoe, bbr_qoe, mtr_qoe]
+
+
+def cal_distance_single(block_file, trace_file, x):
     emulator1 = PccEmulator(
         block_file=block_file,
         trace_file=trace_file,
         solution=s1(),
         USE_CWND=True
     )
-    emulator1.run_for_dur(float("inf"))
+    emulator1.run_for_dur()
     reno_qoe = cal_qoe(x)
 
     emulator2 = PccEmulator(
@@ -35,7 +56,7 @@ def cal_distance(block_file, trace_file, x):
         solution=s2(),
         USE_CWND=True
     )
-    emulator2.run_for_dur(float("inf"))
+    emulator2.run_for_dur()
     bbr_qoe = cal_qoe(x)
 
     tmp = s3()
@@ -46,9 +67,10 @@ def cal_distance(block_file, trace_file, x):
         solution=tmp,
         USE_CWND=False
     )
-    emulator3.run_for_dur(float("inf"))
+    emulator3.run_for_dur()
     mtr_qoe = cal_qoe(x)
     return [reno_qoe, bbr_qoe, mtr_qoe]
+
 
 def plt_qoe(reno_arr, bbr_arr, pic, xidx, size, mtr_arr=None):
     x = np.linspace(1, 100, size)
@@ -76,7 +98,7 @@ if __name__ == '__main__':
     mtr_arr = []
     for j in range(1, 101, 10):
         trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
-        qoe_difference = cal_distance(block_file, trace_file, x)
+        qoe_difference = cal_distance_double(block_file, trace_file, x)
         reno_arr.append(qoe_difference[0])
         bbr_arr.append(qoe_difference[1])
         mtr_arr.append(qoe_difference[2])

@@ -25,8 +25,8 @@ class Engine():
             sender.reset_obs()
             packet = sender.select_packet(1.0 / sender.rate) # sender.new_packet(1.0 / sender.rate)
             if packet:
+                sender.in_event_nums += 1
                 heapq.heappush(self.q, (1.0 / sender.rate, sender, packet))
-            print(len(self.q))
 
     def reset(self):
         self.cur_time = 0.0
@@ -67,6 +67,7 @@ class Engine():
                 if next_hop == len(sender.path):
                     packet.finish_time = event_time
                     self.append_cc_input(event_time, sender, packet)
+                    sender.in_event_nums -= 1
                     if dropped:
                         sender.on_packet_lost(event_time, packet)
                         # print("Packet lost at time %f" % self.cur_time)
@@ -77,7 +78,8 @@ class Engine():
                     # for windows-based cc
                     if sender.USE_CWND:
                         # continue ack may use same inflight numbers which will be limited to cwnd but redundancy in log
-                        for _packet in sender.slide_windows(self.cur_time, sender.get_waiting_ack_nums()):
+                        for _packet in sender.slide_windows(self.cur_time, sender.in_event_nums):
+                            sender.in_event_nums += 1
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
 
@@ -99,16 +101,17 @@ class Engine():
                         packet.extra = extra_info
                         push_new_event = True
                     else:
+                        sender.in_event_nums -= 1
                         if sender.application:
                             sender.wait_for_push_packets.append([event_time, sender, packet])
                     # when do the packet create ? before or after pacing ?
                     _packet = sender.select_packet(new_event_time + (1.0 / sender.rate)) # new_packet(new_event_time + (1.0 / sender.rate))
                     if _packet:
-                        heapq.heappush(sender.wait_for_push_packets, [new_event_time, sender, _packet])
-                        if not sender.USE_CWND or int(sender.cwnd) > 1+sender.get_waiting_ack_nums():
+                        heapq.heappush(sender.wait_for_push_packets, [new_event_time + (1.0 / sender.rate), sender, _packet])
+                        if not sender.USE_CWND or int(sender.cwnd) > sender.in_event_nums:
                             item = heapq.heappop(sender.wait_for_push_packets)
-                            heapq.heappush(self.q, (max(new_event_time + (1.0 / item[1].rate), item[2].create_time), \
-                                                    item[1], item[2]))
+                            sender.in_event_nums += 1
+                            heapq.heappush(self.q, (max(new_event_time + (1.0 / sender.rate), item[0]), item[1], item[2]))
                     new_event_time += pacing_time
                 else:
                     push_new_event = True
@@ -194,11 +197,12 @@ class Engine():
             "Sender_id" : sender.id
         }
         log_data.update(packet.trans2dict())
-        if constant.USE_CWND:
+        if sender.USE_CWND:
             log_data["Extra"]["Cwnd"] = sender.cwnd
         if sender.rate != float("inf"):
             log_data["Extra"]["Send_rate"] = sender.rate
-
+        # log_data["Extra"]["in_event_nums"] = sender.in_event_nums
+        # log_data["Extra"]["wait_for_select"] = len(sender.wait_for_select_packets)
         with open(get_true_log_file(), "a") as f:
             f.write(json.dumps(log_data, ensure_ascii = False)+"\n")
         self.log_items += 1

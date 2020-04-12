@@ -14,7 +14,7 @@ from config.constant import *
 
 from player.examples.reno import Reno
 from player.examples.simple_bbr import BBR
-from player.examples.RL import RL
+# from player.examples.RL import RL
 
 
 __all__ = ["PccEmulator", "CongestionControl", "Packet_selection", "emulator",  \
