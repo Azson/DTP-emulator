@@ -79,7 +79,7 @@ if __name__ == '__main__':
     new_trace_file = "scripts/first_group/traces_1.txt"
     new_block_files = ["config/data_video.csv", "config/data_audio.csv"]
 
-    emulator = create_2flow_emulator(RenoSolution(), block_file, trace_file)
+    emulator = create_2flow_emulator(BbrSolution(), block_file, trace_file)
 
     print(emulator.run_for_dur(20))
     emulator.dump_events_to_file(log_file)

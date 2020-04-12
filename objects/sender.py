@@ -41,6 +41,7 @@ class Sender():
         self.extra = {}
         # for player
         self.wait_for_select_packets = []
+        self.in_event_nums = 0
 
     _next_id = 1
 
@@ -134,7 +135,7 @@ class Sender():
         self.rate = ret["send_rate"] if "send_rate" in ret else self.rate
         self.cwnd = ret["cwnd"] if "cwnd" in ret else self.cwnd
         self.extra = ret["extra"] if "extra" in ret else self.extra
-        if constant.USE_CWND:
+        if self.USE_CWND:
             return int(self.bytes_in_flight) / BYTES_PER_PACKET < self.cwnd
         else:
             return True
