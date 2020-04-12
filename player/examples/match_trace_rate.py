@@ -27,7 +27,7 @@ class MTR(CongestionControl):
     def make_decision(self, cur_time):
         self.update_trace(cur_time)
         output = {
-            "send_rate" : self.send_rate
+            "send_rate" : self.send_rate /2
         }
         return output
 
