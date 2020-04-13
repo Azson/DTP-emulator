@@ -16,18 +16,18 @@ class MTR(CongestionControl):
                 self.trace_list.append(list(
                     map(lambda x: float(x), line.split(","))
                 ))
-        self.send_rate = self.trace_list[0][1] * 10**6 / BYTES_PER_PACKET
+        self.send_rate = self.trace_list[0][1] * 10**6 / BYTES_PER_PACKET /2
 
     def update_trace(self, cur_time):
         for i in range(len(self.trace_list)):
             if self.trace_list[i][0] >= cur_time:
                 break
-            self.send_rate = self.trace_list[i][1] * 10**6 / BYTES_PER_PACKET
+            self.send_rate = self.trace_list[i][1] * 10**6 / BYTES_PER_PACKET /2
 
     def make_decision(self, cur_time):
         self.update_trace(cur_time)
         output = {
-            "send_rate" : self.send_rate /2
+            "send_rate" : self.send_rate
         }
         return output
 

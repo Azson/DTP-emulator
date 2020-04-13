@@ -76,15 +76,19 @@ if __name__ == '__main__':
     log_file = "output/pcc_emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
 
-    new_trace_file = "scripts/first_group/traces_1.txt"
+    new_trace_file = "scripts/first_group/traces_81.txt"
     new_block_files = ["config/data_video.csv", "config/data_audio.csv"]
 
-    emulator = create_2flow_emulator(BbrSolution(), block_file, trace_file)
+    tmp = NormalSolution()
+    tmp.init_trace(new_trace_file)
+    emulator = create_2flow_emulator(tmp, block_file, new_trace_file)
 
     print(emulator.run_for_dur(20))
     emulator.dump_events_to_file(log_file)
     emulator.print_debug()
     print(emulator.senders[0].application.ack_blocks)
+    from qoe_model import cal_qoe
+    print(cal_qoe(0.9))
     # analyze_pcc_emulator(log_packet_file, file_range="all")
     # plot_cwnd(log_packet_file, trace_file=trace_file, file_range="all")
     # plot_throughput(log_packet_file, trace_file=trace_file, file_range="all")
