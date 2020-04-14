@@ -34,7 +34,7 @@ def measure_time():
     return wraps
 
 
-def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, scatter=False, file_range=None):
+def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, scatter=False, file_range=None, sender=None):
 
     plt_data = []
     if file_range:
@@ -43,8 +43,9 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
         with open(log_file, 'r') as f:
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
-
-    plt_data = list(filter(lambda x:x["Type"]=='A' and x["Position"] == 2 and x["Sender_id"] == 2, plt_data))
+    if not sender:
+        sender = [plt_data[0]["Sender_id"]]
+    plt_data = list(filter(lambda x:x["Type"]=='A' and x["Position"] == 2 and x["Sender_id"] in sender, plt_data))
     if time_range:
         plt_data = time_filter(plt_data, time_range)
     # priority by packet id
@@ -207,7 +208,7 @@ def compose_packet_logs(file_range, pattern=None):
         return compose_data
 
 
-def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None):
+def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
     if not constant.USE_CWND:
         print("Your congestion control don't use windows~")
         return
@@ -218,8 +219,10 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
         with open(log_file, 'r') as f:
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
+    if not sender:
+        sender = [plt_data[0]["Sender_id"]]
     # filter the packet at sender
-    plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0 and x["Sender_id"] == 2, plt_data))
+    plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0 and x["Sender_id"] in sender, plt_data))
     # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
     # filter by the time
     if time_range:
@@ -305,7 +308,7 @@ def plot_trace(data_time, ax, font_size, tick_size, trace_file):
     plt.legend(fontsize=font_size)
 
 
-def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None):
+def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
     plt_data = []
     if file_range:
         plt_data = compose_packet_logs(file_range)
@@ -313,8 +316,10 @@ def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatt
         with open(log_file, 'r') as f:
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
+    if not sender:
+        sender = [plt_data[0]["Sender_id"]]
     # filter the packet at receiver
-    plt_data = list(filter(lambda x: x["Type"] == 'A' and x["Position"] == 1 and x["Drop"] == 0, plt_data))
+    plt_data = list(filter(lambda x: x["Type"] == 'A' and x["Position"] == 1 and x["Drop"] == 0 and x["Sender_id"] in sender, plt_data))
     # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
     # filter by the time
     if time_range:

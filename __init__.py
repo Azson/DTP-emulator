@@ -1,4 +1,4 @@
-import os, sys, inspect
+import os, sys, inspect, platform
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -14,7 +14,7 @@ from config.constant import *
 
 from player.examples.reno import Reno
 from player.examples.simple_bbr import BBR
-from player.examples.RL import RL
+# from player.examples.RL import RL
 
 
 __all__ = ["PccEmulator", "CongestionControl", "Packet_selection", "emulator",  \
@@ -29,10 +29,13 @@ log_packet_file = "output/packet_log/packet-0.log"
 new_trace_file = parentdir+"/simple_emulator"+"scripts/first_group/traces_1.txt"
 new_block_files = [parentdir+"/simple_emulator"+"config/data_video.csv", parentdir+"/simple_emulator"+"config/data_audio.csv"]
 
-# for windows
-os.system("rmdir /Q /S output")
-# for linux
-os.system("rm -rf output")
+if platform.system() == "Windows":
+    # for windows
+    os.system("rmdir /Q /S output")
+else:
+    # for linux
+    os.system("rm -rf output")
+
 os.system("mkdir output\packet_log")
 
 emulator = PccEmulator(
