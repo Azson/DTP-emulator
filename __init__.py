@@ -11,15 +11,17 @@ from objects.cc_base import CongestionControl
 from player.packet_selection import Solution as Packet_selection
 from utils import *
 from config.constant import *
+from config import constant
 
 from player.examples.reno import Reno
-from player.examples.simple_bbr import BBR
+# from player.examples.simple_bbr import BBR
 # from player.examples.RL import RL
+from double_flow import create_2flow_emulator
 
 
-__all__ = ["PccEmulator", "CongestionControl", "Packet_selection", "emulator",  \
+__all__ = ["PccEmulator", "CongestionControl", "Packet_selection", \
            "analyze_pcc_emulator", "plot_cwnd", "plot_throughput", \
-           "Reno", "BBR", "RL"]
+           "Reno", "create_2flow_emulator", "constant"]
 
 block_file = parentdir+"/simple_emulator"+"/config/block.txt"
 trace_file = parentdir+"/simple_emulator"+"/config/trace.txt"
@@ -36,10 +38,12 @@ else:
     # for linux
     os.system("rm -rf output")
 
-os.system("mkdir output\packet_log")
+# os.rmdir("output")
+os.mkdir("output")
+os.mkdir("output/packet_log")
 
-emulator = PccEmulator(
-    block_file=block_file,
-    trace_file=trace_file,
-    queue_range=(MIN_QUEUE, MAX_QUEUE)
-)
+# emulator = PccEmulator(
+#     block_file=block_file,
+#     trace_file=trace_file,
+#     queue_range=(MIN_QUEUE, MAX_QUEUE)
+# )

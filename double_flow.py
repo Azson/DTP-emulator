@@ -49,13 +49,14 @@ class NormalSolution(MTR, PacketSelection):
     #     }
 
 
-def create_2flow_emulator(solution, block_file=None, trace_file=None):
+def create_2flow_emulator(solution, block_file=None, trace_file=None, **kwargs):
 
     emulator = PccEmulator(
         block_file=block_file,
         trace_file=trace_file,
         senders=[],
-        links=[]
+        links=[],
+        **kwargs
     )
     emulator.trace_list = emulator.get_trace()
     queue = int(random.uniform(*emulator.queue_range))
@@ -66,7 +67,7 @@ def create_2flow_emulator(solution, block_file=None, trace_file=None):
     sender_1.init_application(emulator.block_file)
 
     solution_2 = NormalSolution()
-    solution_2.init_trace(trace_file)
+    solution_2.init_trace(emulator.trace_file)
     sender_2 = WinSender(emulator.links, 0, emulator.features, history_len=emulator.history_len, solution=solution_2)
     # sender_2.init_application(emulator.block_file, ENABLE_BLOCK_LOG=False)
 

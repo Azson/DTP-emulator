@@ -31,6 +31,8 @@ class PccEmulator(object):
         self.trace_cols = ("time", "bandwith", "loss_rate", "delay")
         self.queue_range = queue_range if queue_range else (constant.MIN_QUEUE, constant.MAX_QUEUE)
         self.trace_file = trace_file if trace_file else parentdir + "/config/trace.txt"
+        if isinstance(self.trace_file, int):
+            self.trace_file = parentdir + "/scripts/first_group/traces_%d.txt" % self.trace_file
         self.block_file = block_file if block_file else parentdir + "/config/block.txt"
         self.event_record = { "Events" : [] }
 
