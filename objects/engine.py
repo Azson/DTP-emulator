@@ -210,6 +210,9 @@ class Engine():
 
     def append_cc_input(self, event_time, sender, packet, event_type="packet"):
         """push the acked or lost packet event to it's sender"""
+        # only use the solution's sender
+        if sender.id != 1:
+            return
         if event_type == "packet":
             data = {
                 "event_time" : event_time,

@@ -10,10 +10,11 @@
 
 from objects.pcc_emulator import PccEmulator
 from utils import analyze_pcc_emulator, plot_cwnd, plot_throughput
-import os, sys, inspect
+import os, sys, inspect, random
 from config.constant import *
 from objects.windows_based_sender import Sender as WinSender
 from objects.engine import Engine
+from objects.link import Link
 
 from player.examples.reno import Reno
 from player.examples.simple_bbr import BBR
@@ -48,12 +49,18 @@ class NormalSolution(MTR, PacketSelection):
     #     }
 
 
-def create_2flow_emulator(solution, block_file, trace_file):
+def create_2flow_emulator(solution, block_file=None, trace_file=None):
 
     emulator = PccEmulator(
         block_file=block_file,
-        trace_file=trace_file
+        trace_file=trace_file,
+        senders=[],
+        links=[]
     )
+    emulator.trace_list = emulator.get_trace()
+    queue = int(random.uniform(*emulator.queue_range))
+    emulator.links = [Link(emulator.trace_list, queue), Link([], queue)]
+
     solution_1 = solution
     sender_1 = WinSender(emulator.links, 0, emulator.features, history_len=emulator.history_len, solution=solution_1)
     sender_1.init_application(emulator.block_file)
@@ -81,7 +88,7 @@ if __name__ == '__main__':
 
     tmp = NormalSolution()
     tmp.init_trace(new_trace_file)
-    emulator = create_2flow_emulator(tmp, block_file, new_trace_file)
+    emulator = create_2flow_emulator(BbrSolution(), block_file, new_trace_file)
 
     print(emulator.run_for_dur(20))
     emulator.dump_events_to_file(log_file)

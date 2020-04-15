@@ -43,10 +43,11 @@ class PccEmulator(object):
         self.senders = None
         self.solution = solution
         self.trace_list = None
-        if "senders" in kwargs and "links" in kwargs:
-            self.senders = kwargs["sender"]
-            self.links = self.links
-        else:
+        if "senders" in kwargs:
+            self.senders = kwargs["senders"]
+        if "links" in kwargs:
+            self.links = kwargs["links"]
+        if "senders" not in kwargs and "links" not in kwargs:
             self.create_new_links_and_senders()
         self.net = Engine(self.senders, self.links)
 
