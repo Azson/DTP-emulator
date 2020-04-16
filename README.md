@@ -203,6 +203,7 @@ For every row,  it's form like below：
 {
     "Time": 0.0, 
     "Waiting_for_ack_nums": 0, 
+    "Sender_id": 1, 
     "Type": "S", 
     "Position": 0, 
     "Send_delay": 0.0, 
@@ -231,8 +232,9 @@ Here is every key's explanation：
 
 - Time : The time handle this event;
 - Waiting_for_ack_nums : The numbers of packets that sended but not acknowledged by source.
+- Sender_id : The sender's id that sent this packet;
 - Type : To distinguish sending or acknowledge packet;
-- Position : The position that packet on. It's 0 if packet on source. 
+- Position : The position that packet on. It's 0 if packet on source'
 - Send_delay : The time that packet sent into window;
 - Pacing_delay : The time that packet send into network. It's used in the congestion control like BBR.
 - Lantency : The time that packet spending on links including queue delay and propagation delay;
@@ -311,5 +313,5 @@ We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also c
 
 - [x] Add BBR congestion control module.
 - [x] Add AI congestion control module.
-- [ ] Add QOE mudule.
+- [x] Add QOE mudule.
 - [ ] Add system presentation PPT.
