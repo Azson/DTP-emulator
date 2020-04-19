@@ -15,7 +15,7 @@ import json
 from player.aitrans_solution import Solution as s1
 from player.aitrans_solution2 import Solution as s2
 
-def cal_qoe(x):
+def cal_qoe(x=0.82):
     block_data = []
     urgency = []
     priorities = []

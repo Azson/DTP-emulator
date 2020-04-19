@@ -9,7 +9,7 @@
 '''
 
 from objects.pcc_emulator import PccEmulator
-from utils import analyze_pcc_emulator, plot_cwnd, plot_throughput
+from utils import analyze_pcc_emulator, plot_cwnd, plot_rate
 import os, sys, inspect
 from config.constant import *
 

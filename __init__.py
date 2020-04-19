@@ -17,11 +17,13 @@ from player.examples.reno import Reno
 # from player.examples.simple_bbr import BBR
 # from player.examples.RL import RL
 from double_flow import create_2flow_emulator
+from qoe_model import cal_qoe
 
 
 __all__ = ["PccEmulator", "CongestionControl", "Packet_selection", \
-           "analyze_pcc_emulator", "plot_cwnd", "plot_throughput", \
-           "Reno", "create_2flow_emulator", "constant"]
+           "analyze_pcc_emulator", "plot_cwnd", "plot_rate", \
+           "Reno", "create_2flow_emulator", "constant", \
+           "cal_qoe"]
 
 block_file = parentdir+"/simple_emulator"+"/config/block.txt"
 trace_file = parentdir+"/simple_emulator"+"/config/trace.txt"

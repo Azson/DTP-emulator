@@ -9,19 +9,18 @@ from objects.pcc_emulator import PccEmulator
 from player.packet_selection import Solution as Packet_selection
 
 # We provided some simple algorithms about congestion control to help you being familiar with this competition.
-# Like Reno, BBR and an example about reinforcement learning implemented by tensorflow
+# Like Reno and an example about reinforcement learning implemented by tensorflow
 from player.examples.reno import Reno
-from player.examples.simple_bbr import BBR
 # Ensuring that you have installed tensorflow before you use it
-# from player.examples.RL import RL
+from player.examples.RL import RL
 
 # We provided some function of plotting to make you analyze result easily in utils.py
-from utils import plot_cwnd, plot_throughput, analyze_pcc_emulator
+from utils import plot_cwnd, plot_rate, analyze_pcc_emulator
 
 
 # Your solution should include packet selection and congestion control.
 # So, we recommend you to achieve it by inherit the objects we provided and overwritten necessary method.
-class MySolution(Packet_selection, Reno):
+class MySolution(Packet_selection, RL):
 
     def select_packet(self, cur_time, packet_queue):
         """
@@ -57,7 +56,7 @@ my_solution = MySolution()
 # You can get more information about parameters at https://github.com/Azson/DTP-emulator/tree/pcc-emulator#constant
 emulator = PccEmulator(
     solution=my_solution,
-    USE_CWND=True,
+    USE_CWND=False,
     ENABLE_LOG=True
 )
 
@@ -74,4 +73,4 @@ analyze_pcc_emulator(log_packet_file, file_range="all")
 
 # Output the picture of cwnd_changing.png
 # You can get more information from https://github.com/Azson/DTP-emulator/tree/pcc-emulator#cwnd_changingpng
-plot_cwnd(log_packet_file, file_range="all")
+plot_rate(log_packet_file, file_range="all")

@@ -8,13 +8,13 @@ from simple_emulator import PccEmulator, CongestionControl
 from simple_emulator import Packet_selection
 
 # We provided some simple algorithms about congestion control to help you being familiar with this competition.
-# Like Reno, BBR and an example about reinforcement learning implemented by tensorflow
-from simple_emulator import Reno, BBR
+# Like Reno and an example about reinforcement learning implemented by tensorflow
+from simple_emulator import Reno
 # Ensuring that you have installed tensorflow before you use it
 # from simple_emulator import RL
 
 # We provided some function of plotting to make you analyze result easily in utils.py
-from simple_emulator import analyze_pcc_emulator, plot_cwnd, plot_throughput
+from simple_emulator import analyze_pcc_emulator, plot_cwnd, plot_rate
 
 
 # Your solution should include packet selection and congestion control.

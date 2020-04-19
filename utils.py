@@ -44,7 +44,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
     if not sender:
-        sender = [plt_data[0]["Sender_id"]]
+        sender = [1]
     plt_data = list(filter(lambda x:x["Type"]=='A' and x["Position"] == 2 and x["Sender_id"] in sender, plt_data))
     if time_range:
         plt_data = time_filter(plt_data, time_range)
@@ -220,7 +220,7 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
     if not sender:
-        sender = [plt_data[0]["Sender_id"]]
+        sender = [1]
     # filter the packet at sender
     plt_data = list(filter(lambda x: x["Type"] == 'S' and x["Position"] == 0 and x["Sender_id"] in sender, plt_data))
     # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
@@ -308,7 +308,7 @@ def plot_trace(data_time, ax, font_size, tick_size, trace_file):
     plt.legend(fontsize=font_size)
 
 
-def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
+def plot_rate(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
     plt_data = []
     if file_range:
         plt_data = compose_packet_logs(file_range)
@@ -317,7 +317,64 @@ def plot_throughput(log_file, rows=None, trace_file=None, time_range=None, scatt
             for line in f.readlines():
                 plt_data.append(json.loads(line.replace("'", '"')))
     if not sender:
-        sender = [plt_data[0]["Sender_id"]]
+        sender = [1]
+    # filter the packet at receiver
+    plt_data = list(
+        filter(lambda x: x["Type"] == 'S' and x["Position"] == 0 and x["Drop"] == 0 and x["Sender_id"] in sender,
+               plt_data))
+    # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
+    # filter by the time
+    if time_range:
+        plt_data = time_filter(plt_data, time_range)
+    # plot "rows" counts data
+    if isinstance(rows, int):
+        plt_data = plt_data[:rows]
+
+    pic_nums = 1
+    font_size = 50
+    tick_size = 50
+
+    data_time = []
+    data_rate = []
+    data_inflight = []
+    for idx, item in enumerate(plt_data):
+        data_time.append(item["Time"])
+        data_rate.append(item["Extra"]["Send_rate"])
+        data_inflight.append(item["Waiting_for_ack_nums"])
+
+    pic = plt.figure(figsize=(50, 30 * pic_nums))
+    # plot cwnd changing
+    ax = plt.subplot(pic_nums, 1, 1)
+    if scatter:
+        # ax.scatter(data_time, data_throughput, label="Throughput", c='g', s=200)
+        ax.scatter(data_time, data_rate, label="Rate", c='black', s=200)
+        # ax.scatter(data_time, data_inflight, label="Inflight", c='r', s=200)
+    else:
+        # ax.plot(data_time, data_throughput, label="Throughput", c='g')
+        ax.plot(data_time, data_rate, label="Rate", c='black', linewidth=5)
+        # ax.plot(data_time, data_inflight, label="Inflight", c='r', linewidth=5)
+    ax.set_ylabel("Packet Numbers", fontsize=font_size)
+    ax.set_xlabel("Time / s", fontsize=font_size)
+    plt.tick_params(labelsize=tick_size)
+    plt.legend(fontsize=font_size)
+
+    # plot bandwith
+    if trace_file:
+        plot_trace(data_time, ax, font_size, tick_size, trace_file)
+
+    plt.savefig("output/rate_changing.png")
+
+
+def plot_bbr(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
+    plt_data = []
+    if file_range:
+        plt_data = compose_packet_logs(file_range)
+    else:
+        with open(log_file, 'r') as f:
+            for line in f.readlines():
+                plt_data.append(json.loads(line.replace("'", '"')))
+    if not sender:
+        sender = [1]
     # filter the packet at receiver
     plt_data = list(filter(lambda x: x["Type"] == 'A' and x["Position"] == 1 and x["Drop"] == 0 and x["Sender_id"] in sender, plt_data))
     # plt_data = list(filter(lambda x: x["Drop"] == 0, plt_data))
@@ -381,4 +438,4 @@ if __name__ == '__main__':
     new_trace_file = "scripts/first_group/traces_1.txt"
     # analyze_pcc_emulator(log_packet_file, time_range=None, scatter=False, trace_file=new_trace_file, file_range="all")
     # plot_cwnd(log_packet_file, None, trace_file=new_trace_file, time_range=None, scatter=False, file_range="all")
-    plot_throughput(log_packet_file, file_range="all", scatter=False)
+    plot_rate(log_packet_file, file_range="all", scatter=False)
