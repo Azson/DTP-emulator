@@ -17,7 +17,7 @@ from objects.engine import Engine
 from objects.link import Link
 
 from player.examples.reno import Reno
-from player.examples.simple_bbr import BBR
+# from player.examples.simple_bbr import BBR
 from player.examples.match_trace_rate import MTR
 from player.packet_selection import Solution as PacketSelection
 from objects.cc_base import CongestionControl
@@ -28,8 +28,8 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 
-class BbrSolution(BBR, PacketSelection):
-    pass
+# class BbrSolution(BBR, PacketSelection):
+#     pass
 
 
 class RenoSolution(Reno, PacketSelection):
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     tmp = NormalSolution()
     tmp.init_trace(new_trace_file)
-    emulator = create_2flow_emulator(BbrSolution(), block_file, new_trace_file)
+    emulator = create_2flow_emulator(RenoSolution(), block_file, new_trace_file)
 
     print(emulator.run_for_dur(20))
     emulator.dump_events_to_file(log_file)

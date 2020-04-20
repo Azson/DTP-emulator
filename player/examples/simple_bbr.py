@@ -148,9 +148,9 @@ class BBR(Reno):
 
     def cc_trigger(self, data):
 
-        packet_type = data["packet_type"]
+        packet_type = data["event_type"]
         event_time = data["event_time"]
-        packet = data["packet"]
+        packet = data["packet_information_dict"]
         rtt = packet["Lantency"] + packet["Pacing_delay"]
 
         if packet_type == PACKET_TYPE_FINISHED:

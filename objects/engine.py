@@ -216,10 +216,10 @@ class Engine():
         if event_type == "packet":
             data = {
                 "event_time" : event_time,
-                "packet_type" : get_packet_type(sender, packet),
-                "packet" : packet.trans2dict()
+                "event_type" : get_packet_type(sender, packet),
+                "packet_information_dict" : packet.trans2dict()
             }
-            data["packet"]["Extra"]["inflight"] = sender.get_waiting_ack_nums()
+            data["packet_information_dict"]["Extra"]["inflight"] = sender.get_waiting_ack_nums()
         # todo : how to design system information
         elif event_type == "system":
             data = {
