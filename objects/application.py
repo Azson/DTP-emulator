@@ -137,6 +137,7 @@ class Appication_Layer(object):
             self.now_block = self.select_block()
             if self.now_block is None:
                 return None
+            self.ack_blocks[self.now_block.block_id] = []
             self.now_block_offset = 0
             self.now_block.split_nums = int(np.ceil(self.now_block.size /
                                             (self.bytes_per_packet - self.head_per_packet)))

@@ -46,7 +46,7 @@ class Engine():
 
         while self.cur_time < end_time:
             if len(self.q) == 0:
-                self.close()
+                print("Time {}s : There is no packet from application~".format(self.cur_time))
                 return
 
             event_time, sender, packet = heapq.heappop(self.q)
@@ -132,7 +132,7 @@ class Engine():
                 packet.latency = new_latency
                 packet.drop = new_dropped
                 heapq.heappush(self.q, (new_event_time, sender, packet))
-
+        self.close()
         sender_mi = self.senders[0].get_run_data()
         throughput = sender_mi.get("recv rate")
         latency = sender_mi.get("avg latency")
@@ -234,7 +234,7 @@ class Engine():
 
     def close(self):
         """close all the application before closing this system."""
-        print("Time {}s : There is no packet from application~".format(self.cur_time))
+
         for sender in self.senders:
             debug_print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
             if sender.application:

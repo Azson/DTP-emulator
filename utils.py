@@ -61,7 +61,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     data_finish_time = []
     data_drop = []
     data_sum_time = []
-    data_miss_ddl = []
+    # data_miss_ddl = []
     for idx, item in enumerate(plt_data):
         if item["Type"] == 'A':
             if item["Drop"] == 1:
@@ -71,8 +71,8 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
                 data_finish_time.append(item["Time"])
                 data_sum_time.append(item["Send_delay"] + item["Pacing_delay"] + item["Lantency"])
 
-            if item["Block_info"]["Deadline"] < data_sum_time[-1]:
-                data_miss_ddl.append(idx)
+            # if item["Block_info"]["Deadline"] < data_sum_time[-1]:
+            #     data_miss_ddl.append(idx)
 
     pic = plt.figure(figsize=(50, 30 * pic_nums))
     # plot latency distribution
@@ -83,13 +83,13 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     if scatter:
         ax.scatter(data_finish_time, data_lantency, label="Latency", s=200)
     else:
-        ax.plot(data_finish_time, data_lantency, label="Latency")
+        ax.plot(data_finish_time, data_lantency, label="Latency", linewidth=5)
 
     ax.scatter([plt_data[idx]["Time"] for idx in data_drop],
                [min(data_lantency) / 2]*len(data_drop), label="Drop", s=300, c='r', marker='x')
 
     # plot average latency
-    ax.plot([0, data_finish_time[-1] ], [np.mean(data_lantency)]*2, label="Average Latency",
+    ax.plot([0, data_finish_time[-1] ], [np.mean(data_lantency)]*2, label="Average Latency", linewidth=5,
             c='g')
     plt.legend(fontsize=font_size)
     ax.set_xlim(data_finish_time[0] / 2, data_finish_time[-1] * 1.2)
@@ -119,16 +119,21 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     # plot average latency
     ax.plot([0, data_finish_time[-1]], [np.mean(data_sum_time)] * 2, label="Average Rtt",
             c='r', linewidth=5)
-    plt.legend(fontsize=font_size)
+
     # ax.set_xlim(data_finish_time[0]/2, data_finish_time[-1]*1.5)
     plt.tick_params(labelsize=tick_size)
+    handles, labels = ax.get_legend_handles_labels()
 
     # plot bandwith
     if trace_file:
-        plot_trace(data_finish_time, ax, font_size, tick_size, trace_file)
+        tmp_ax = plot_trace(data_finish_time, ax, font_size, tick_size, trace_file)
+        handles.extend(tmp_ax.get_legend_handles_labels()[0])
+        labels.extend(tmp_ax.get_legend_handles_labels()[1])
+
+    plt.legend(handles, labels, fontsize=font_size)
 
     plt.tight_layout()
-
+    plt.legend(fontsize=font_size)
     plt.savefig("output/pcc_emulator-analysis.png")
 
 
@@ -257,7 +262,8 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
     ax.set_ylabel("Packet", fontsize=font_size)
     ax.set_xlabel("Time / s", fontsize=font_size)
     plt.tick_params(labelsize=tick_size)
-    plt.legend(fontsize=font_size)
+    # plt.legend(fontsize=font_size)
+    # ax.legend(fontsize=font_size)
 
     # # plot used cwnd changing
     # ax = plt.subplot(pic_nums, 1, 2)
@@ -266,11 +272,15 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
     # ax.set_xlabel("Time (s)", fontsize=20)
     # plt.tick_params(labelsize=20)
     # plt.legend(fontsize=20)
+    handles, labels = ax.get_legend_handles_labels()
 
     # plot bandwith
     if trace_file:
-        plot_trace(data_time, ax, font_size, tick_size, trace_file)
+        tmp_ax = plot_trace(data_time, ax, font_size, tick_size, trace_file)
+        handles.extend(tmp_ax.get_legend_handles_labels()[0])
+        labels.extend(tmp_ax.get_legend_handles_labels()[1])
 
+    plt.legend(handles, labels, fontsize=font_size)
     plt.savefig("output/cwnd_changing.png")
 
 
@@ -293,19 +303,20 @@ def plot_trace(data_time, ax, font_size, tick_size, trace_file):
             ed = idx
             break
         ax.plot([st, trace_list[idx][0]], [trace_list[idx - 1][1] * 10 ** 6 / BYTES_PER_PACKET] * 2, '--',
-                linewidth=5)
+                linewidth=5, c='b')
         st = trace_list[idx][0]
 
     if ed == -1 and trace_list[-1][0] < max_time:
         ax.plot([st, max_time], [trace_list[-1][1] * 10 ** 6 / BYTES_PER_PACKET] * 2, '--',
-                label="Different Bandwith", linewidth=5)
+                label="Different Bandwith", linewidth=5, c='b')
     elif ed != -1:
         ax.plot([st, max_time], [trace_list[ed - 1][1] * 10 ** 6 / BYTES_PER_PACKET] * 2, '--',
-                label="Different Bandwith", linewidth=5)
+                label="Different Bandwith", linewidth=5, c='b')
 
     ax.set_ylabel("Link bandwith (Packet/s)", fontsize=font_size)
     plt.tick_params(labelsize=tick_size)
-    plt.legend(fontsize=font_size)
+    # plt.legend(fontsize=font_size)
+    return ax
 
 
 def plot_rate(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
@@ -356,12 +367,15 @@ def plot_rate(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
     ax.set_ylabel("Packet Numbers", fontsize=font_size)
     ax.set_xlabel("Time / s", fontsize=font_size)
     plt.tick_params(labelsize=tick_size)
-    plt.legend(fontsize=font_size)
+    handles, labels = ax.get_legend_handles_labels()
 
     # plot bandwith
     if trace_file:
-        plot_trace(data_time, ax, font_size, tick_size, trace_file)
+        tmp_ax = plot_trace(data_time, ax, font_size, tick_size, trace_file)
+        handles.extend(tmp_ax.get_legend_handles_labels()[0])
+        labels.extend(tmp_ax.get_legend_handles_labels()[1])
 
+    plt.legend(handles, labels, fontsize=font_size)
     plt.savefig("output/rate_changing.png")
 
 
@@ -422,12 +436,15 @@ def plot_bbr(log_file, rows=None, trace_file=None, time_range=None, scatter=Fals
     ax.set_ylabel("Packet Numbers", fontsize=font_size)
     ax.set_xlabel("Time / s", fontsize=font_size)
     plt.tick_params(labelsize=tick_size)
-    plt.legend(fontsize=font_size)
+    handles, labels = ax.get_legend_handles_labels()
 
     # plot bandwith
     if trace_file:
-        plot_trace(data_time, ax, font_size, tick_size, trace_file)
+        tmp_ax = plot_trace(data_time, ax, font_size, tick_size, trace_file)
+        handles.extend(tmp_ax.get_legend_handles_labels()[0])
+        labels.extend(tmp_ax.get_legend_handles_labels()[1])
 
+    plt.legend(handles, labels, fontsize=font_size)
     plt.savefig("output/throughput_changing.png")
 
 
