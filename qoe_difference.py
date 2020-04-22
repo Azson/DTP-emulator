@@ -92,7 +92,7 @@ if __name__ == '__main__':
     log_packet_file = "output/packet_log/packet-0.log"
     pic = "qoemodel/qoe_difference.png"
     idx,size = "trace_index",10
-    x = 0.9
+    x = 0.82
     reno_arr = []
     bbr_arr = []
     mtr_arr = []
