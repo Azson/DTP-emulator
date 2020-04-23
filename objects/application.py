@@ -10,7 +10,7 @@ class Appication_Layer(object):
 
     def __init__(self,
                  block_file,
-                 create_det=0.5,
+                 create_det=0.1,
                  bytes_per_packet=1500,
                  **kwargs):
         self.extra = {}
@@ -152,7 +152,7 @@ class Appication_Layer(object):
                 self.now_block_offset == self.now_block.split_nums - 1:
             payload = self.now_block.size % (self.bytes_per_packet - self.head_per_packet)
 
-        packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
+        packet = Packet(create_time=self.now_block.timestamp,
                           next_hop=0,
                           offset=self.now_block_offset,
                           packet_size=self.bytes_per_packet,

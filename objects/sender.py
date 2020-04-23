@@ -86,7 +86,7 @@ class Sender():
         """
         while True:
             # if there is no packet can be sended, we need to send packet that created after cur_time
-            packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) == 0 else None)
+            packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) + len(self.wait_for_push_packets) == 0 == 0 else None)
             if not packet:
                 break
             self.wait_for_select_packets.append(packet)
@@ -184,7 +184,7 @@ class Sender():
         self.bytes_in_flight -= BYTES_PER_PACKET
         # do retrans if lost
         retrans_packet = packet.create_retrans_packet(event_time)
-        self.wait_for_push_packets.append([event_time, self, retrans_packet])
+        self.wait_for_select_packets.append(retrans_packet)
 
     def set_rate(self, new_rate):
         self.rate = new_rate
@@ -243,7 +243,7 @@ class Sender():
 
     def print_debug(self):
         print("Sender: %d" % (self.id))
-        print("Obs: %s" % str(self.get_obs()))
+        # print("Obs: %s" % str(self.get_obs()))
         print("Rate: %f" % self.rate)
         print("Sent: %d" % self.sent)
         print("Acked: %d" % self.acked)

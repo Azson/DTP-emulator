@@ -80,6 +80,8 @@ class Engine():
                         # continue ack may use same inflight numbers which will be limited to cwnd but redundancy in log
                         for _packet in sender.slide_windows(self.cur_time, sender.in_event_nums):
                             sender.in_event_nums += 1
+                            # print("Now {}, packet id {}, create time {}".format(self.cur_time, _packet.packet_id, _packet.create_time))
+                            # print("wait for push set {}".format(set([item[2].create_time for item in sender.wait_for_push_packets])))
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
 
@@ -203,6 +205,7 @@ class Engine():
             log_data["Extra"]["Send_rate"] = sender.rate
         # log_data["Extra"]["in_event_nums"] = sender.in_event_nums
         # log_data["Extra"]["wait_for_select"] = len(sender.wait_for_select_packets)
+        # log_data["Extra"]["wait_for_push"] = len(sender.wait_for_push_packets)
         with open(get_true_log_file(), "a") as f:
             f.write(json.dumps(log_data, ensure_ascii = False)+"\n")
         self.log_items += 1
