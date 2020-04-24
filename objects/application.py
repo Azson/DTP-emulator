@@ -60,7 +60,8 @@ class Appication_Layer(object):
             df_data.columns = ["time", "size", "key_frame"]
 
         for idx in range(shape[0]):
-            block = Block(bytes_size=float(df_data["size"][idx]),
+            det = 1
+            block = Block(bytes_size=float(df_data["size"][idx])*det,
                           deadline=0.2,
                           timestamp=float(df_data["time"][idx]))
             self.block_queue.append(block)

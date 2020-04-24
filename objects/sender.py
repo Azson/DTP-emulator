@@ -92,7 +92,7 @@ class Sender():
             self.wait_for_select_packets.append(packet)
             # for multi flow
             if self.application is None:
-                break
+                return self.wait_for_select_packets.pop(0)
         # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
         # self.clear_miss_ddl(cur_time)
         if constant.ENABLE_HASH_CHECK:

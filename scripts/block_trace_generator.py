@@ -21,10 +21,10 @@ def generate_block_trace(network_trace, avg_block_size=200000, dur_sec=15, use_n
     cur_time = 0
     for idx, item in enumerate(trace_list):
         time, bw, loss_rate, p_time = item
-        bw *= 10**6
         if idx == 0:
             continue
-        end_time = trace_list[-1][0]+5 if idx == len(trace_list)-1 else trace_list[idx+1][0]
+        bw = trace_list[idx-1][1] * 10 ** 6
+        end_time = trace_list[-1][0]+5 if idx == len(trace_list)-1 else trace_list[idx][0]
         end_time = min(end_time, dur_sec)
         while cur_time < end_time:
             new_block_create_time = cur_time
@@ -33,7 +33,9 @@ def generate_block_trace(network_trace, avg_block_size=200000, dur_sec=15, use_n
                 new_block_size = new_block_size * (0.9+0.2*random.random())
 
             block_list.append([new_block_create_time, new_block_size])
-            cur_time += new_block_size / bw
+            # cur_time += new_block_size / bw
+            cur_time += (new_block_size + 20*(new_block_size//1480 + 1)) / bw
+            print(cur_time, new_block_size, bw)
         if cur_time >= dur_sec:
             break
     if output_file:
@@ -49,6 +51,6 @@ def generate_block_trace(network_trace, avg_block_size=200000, dur_sec=15, use_n
 if __name__ == '__main__':
     # network_trace = "first_group/traces_1.txt"
     network_trace = "../config/trace.txt"
-    block_trace = generate_block_trace(network_trace, use_noisy=True)
+    block_trace = generate_block_trace(network_trace, use_noisy=False)
     print(block_trace)
     print(len(block_trace))

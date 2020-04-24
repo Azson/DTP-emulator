@@ -105,7 +105,7 @@ class Packet(object):
         if cur_time and self.finish_time != -1:
             return cur_time > self.finish_time
         # for finished packet
-        return self.send_delay+self.pacing_delay+self.latency > self.block_info["Deadline"]
+        return cur_time-self.block_info["Create_time"] > self.block_info["Deadline"]
 
     def __lt__(self, other):
         return self.create_time < other.create_time
