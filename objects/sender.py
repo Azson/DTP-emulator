@@ -84,17 +84,18 @@ class Sender():
         :param cur_time:
         :return:
         """
+        # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
+        # self.clear_miss_ddl(cur_time)
         while True:
             # if there is no packet can be sended, we need to send packet that created after cur_time
-            packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) + len(self.wait_for_push_packets) == 0 == 0 else None)
+            packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) + len(self.wait_for_push_packets) == 0 else None)
             if not packet:
                 break
             self.wait_for_select_packets.append(packet)
             # for multi flow
             if self.application is None:
                 return self.wait_for_select_packets.pop(0)
-        # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
-        # self.clear_miss_ddl(cur_time)
+
         if constant.ENABLE_HASH_CHECK:
             last_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
         # print("wait for select %d, already send %d" % (len(self.wait_for_select_packets), self.sent))
