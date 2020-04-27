@@ -61,8 +61,14 @@ class Appication_Layer(object):
 
         for idx in range(shape[0]):
             det = 1
+            priority = 0
+            if "video" in csv_file:
+                priority = 1
+            elif "audio" in csv_file:
+                priority = 2
             block = Block(bytes_size=float(df_data["size"][idx])*det,
                           deadline=0.2,
+                          priority=priority,
                           timestamp=float(df_data["time"][idx]))
             self.block_queue.append(block)
 
