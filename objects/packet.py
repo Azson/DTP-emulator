@@ -66,7 +66,7 @@ class Packet(object):
             "Position": self.next_hop,
             "Send_delay": self.send_delay,
             "Pacing_delay" : self.pacing_delay,
-            "Lantency": self.latency,
+            "Latency": self.latency,
             "Drop": 1 if self.drop else 0,
             "Packet_id": self.packet_id,
             "Create_time": self.create_time,

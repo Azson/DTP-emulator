@@ -57,7 +57,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     font_size = 50
     tick_size = 50
 
-    data_lantency = []
+    data_latency = []
     data_finish_time = []
     data_drop = []
     data_sum_time = []
@@ -67,9 +67,9 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
             if item["Drop"] == 1:
                 data_drop.append(idx)
             else:
-                data_lantency.append(item["Lantency"])
+                data_latency.append(item["Latency"])
                 data_finish_time.append(item["Time"])
-                data_sum_time.append(item["Send_delay"] + item["Pacing_delay"] + item["Lantency"])
+                data_sum_time.append(item["Send_delay"] + item["Pacing_delay"] + item["Latency"])
 
             # if item["Block_info"]["Deadline"] < data_sum_time[-1]:
             #     data_miss_ddl.append(idx)
@@ -81,15 +81,15 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     ax.set_ylabel("Latency / s", fontsize=font_size)
     ax.set_xlabel("Time / s", fontsize=font_size)
     if scatter:
-        ax.scatter(data_finish_time, data_lantency, label="Latency", s=200)
+        ax.scatter(data_finish_time, data_latency, label="Latency", s=200)
     else:
-        ax.plot(data_finish_time, data_lantency, label="Latency", linewidth=5)
+        ax.plot(data_finish_time, data_latency, label="Latency", linewidth=5)
 
     ax.scatter([plt_data[idx]["Time"] for idx in data_drop],
-               [min(data_lantency) / 2]*len(data_drop), label="Drop", s=300, c='r', marker='x')
+               [min(data_latency) / 2]*len(data_drop), label="Drop", s=300, c='r', marker='x')
 
     # plot average latency
-    ax.plot([0, data_finish_time[-1] ], [np.mean(data_lantency)]*2, label="Average Latency", linewidth=5,
+    ax.plot([0, data_finish_time[-1] ], [np.mean(data_latency)]*2, label="Average Latency", linewidth=5,
             c='g')
     plt.legend(fontsize=font_size)
     ax.set_xlim(data_finish_time[0] / 2, data_finish_time[-1] * 1.2)
@@ -101,9 +101,9 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     # ax.set_ylabel("Latency / s", fontsize=font_size)
     # ax.set_xlabel("Time / s", fontsize=font_size)
     # ax.scatter([data_finish_time[idx] for idx in data_drop],
-    #                 [data_lantency[idx] for idx in data_drop], label="Drop")
+    #                 [data_latency[idx] for idx in data_drop], label="Drop")
     # ax.scatter([data_finish_time[idx] for idx in data_miss_ddl],
-    #                 [data_lantency[idx] for idx in data_miss_ddl], label="Miss_deadline")
+    #                 [data_latency[idx] for idx in data_miss_ddl], label="Miss_deadline")
     # plt.legend(fontsize=font_size)
     # ax.set_xlim(data_finish_time[0] / 2, data_finish_time[-1] * 1.5)
     # plt.tick_params(labelsize=tick_size)
@@ -414,7 +414,7 @@ def plot_bbr(log_file, rows=None, trace_file=None, time_range=None, scatter=Fals
             print("error order!")
         data_time.append(item["Time"])
         # used_time = (item["Time"] - item["Create_time"] - item["Send_delay"] - item["Pacing_delay"])
-        used_time = item["Lantency"]
+        used_time = item["Latency"]
         data_throughput.append((idx+1-item["Extra"]["delivered"]) / used_time)
         data_bdp.append(item["Extra"]["max_bw"] * item["Extra"]["min_rtt"] if item["Extra"]["max_bw"] != float("-inf") else 0)
         data_inflight.append(item["Waiting_for_ack_nums"])
