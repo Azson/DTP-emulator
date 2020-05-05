@@ -19,15 +19,14 @@ from player.examples.reno import Reno
 from double_flow import create_2flow_emulator
 from qoe_model import cal_qoe
 
-from scripts.block_trace_generator import generate_block_trace
+# from scripts.block_trace_generator import generate_block_trace
 # from scripts.network import create_network, create_trace
 
 
 __all__ = ["PccEmulator", "CongestionControl", "Packet_selection", \
            "analyze_pcc_emulator", "plot_cwnd", "plot_rate", \
            "Reno", "create_2flow_emulator", "constant", \
-           "cal_qoe", \
-           "generate_block_trace"]
+           "cal_qoe"]
 
 block_file = parentdir+"/simple_emulator"+"/config/block.txt"
 trace_file = parentdir+"/simple_emulator"+"/config/trace.txt"

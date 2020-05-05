@@ -2,7 +2,7 @@ import json, random, os, inspect
 import numpy as np
 
 from utils import (
-    get_emulator_info
+    get_emulator_info, measure_time
 )
 from objects.windows_based_sender import Sender as W_sender
 from objects.link import Link
@@ -107,6 +107,7 @@ class PccEmulator(object):
         for item in self.senders:
             item.init_application(self.block_file)
 
+    # @measure_time()
     def run_for_dur(self, during_time=float("inf")):
         """run this emulator for time of "dur_time"."""
         # action = [0.9, 0.9]
