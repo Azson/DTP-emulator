@@ -19,6 +19,9 @@ from player.examples.reno import Reno
 from double_flow import create_2flow_emulator
 from qoe_model import cal_qoe
 
+# from scripts.block_trace_generator import generate_block_trace
+# from scripts.network import create_network, create_trace
+
 
 __all__ = ["PccEmulator", "CongestionControl", "Packet_selection", \
            "analyze_pcc_emulator", "plot_cwnd", "plot_rate", \
@@ -33,16 +36,20 @@ log_packet_file = "output/packet_log/packet-0.log"
 new_trace_file = parentdir+"/simple_emulator"+"scripts/first_group/traces_1.txt"
 new_block_files = [parentdir+"/simple_emulator"+"config/data_video.csv", parentdir+"/simple_emulator"+"config/data_audio.csv"]
 
-if platform.system() == "Windows":
-    # for windows
-    os.system("rmdir /Q /S output")
-else:
-    # for linux
-    os.system("rm -rf output")
+try:
+    if platform.system() == "Windows":
+        # for windows
+        os.system("rmdir /Q /S output")
+    else:
+        # for linux
+        os.system("rm -rf output")
 
-# os.rmdir("output")
-os.mkdir("output")
-os.mkdir("output/packet_log")
+    # os.rmdir("output")
+    os.mkdir("output")
+    os.mkdir("output/packet_log")
+
+except Exception as e:
+    pass
 
 # emulator = PccEmulator(
 #     block_file=block_file,

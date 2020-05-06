@@ -38,7 +38,7 @@ class MTR(CongestionControl):
     def append_input(self, data):
         self._input_list.append(data)
 
-        if data["packet_type"] != PACKET_TYPE_TEMP:
+        if data["event_type"] != PACKET_TYPE_TEMP:
             self.cc_trigger(data)
             return {
                 "send_rate" : self.send_rate

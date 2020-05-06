@@ -10,7 +10,7 @@ class Appication_Layer(object):
 
     def __init__(self,
                  block_file,
-                 create_det=0.5,
+                 create_det=0.1,
                  bytes_per_packet=1500,
                  **kwargs):
         self.extra = {}
@@ -60,8 +60,15 @@ class Appication_Layer(object):
             df_data.columns = ["time", "size", "key_frame"]
 
         for idx in range(shape[0]):
-            block = Block(bytes_size=float(df_data["size"][idx]),
+            det = 1
+            priority = 0
+            if "video" in csv_file:
+                priority = 1
+            elif "audio" in csv_file:
+                priority = 2
+            block = Block(bytes_size=float(df_data["size"][idx])*det,
                           deadline=0.2,
+                          priority=priority,
                           timestamp=float(df_data["time"][idx]))
             self.block_queue.append(block)
 
@@ -137,6 +144,7 @@ class Appication_Layer(object):
             self.now_block = self.select_block()
             if self.now_block is None:
                 return None
+            self.ack_blocks[self.now_block.block_id] = []
             self.now_block_offset = 0
             self.now_block.split_nums = int(np.ceil(self.now_block.size /
                                             (self.bytes_per_packet - self.head_per_packet)))
@@ -151,7 +159,7 @@ class Appication_Layer(object):
                 self.now_block_offset == self.now_block.split_nums - 1:
             payload = self.now_block.size % (self.bytes_per_packet - self.head_per_packet)
 
-        packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
+        packet = Packet(create_time=self.now_block.timestamp,
                           next_hop=0,
                           offset=self.now_block_offset,
                           packet_size=self.bytes_per_packet,

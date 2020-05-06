@@ -42,7 +42,7 @@ emulator = PccEmulator(solution=my_solution)
 emulator.run_for_dur()
 ```
 
-Here is an complete  [demo](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/demo_1.py) about the using of pypi.
+Here is an complete  [demo](https://github.com/AItransCompetition/DTP_Demo) about the using of pypi.
 
 ## For this repository
 
@@ -56,13 +56,13 @@ Then, just run the order "python3 main.py".
 
 You will get some output in the path "/output/" and should fix your code according to the output.
 
-Here is an complete  [demo](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/deom_2.py) about the using of pypi.
+Here is an complete  [demo](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/deom_2.py) about the using of this repository.
 
 # For Detail
 
 ## player
 
-Here are the 2 modules that players need to finished.
+Here are the 3 methods that players need to finished.
 
 ### aitrans_solution.py
 
@@ -72,8 +72,9 @@ It should be implemented with these method :
 - [make_decision](#make_decision)
 - [append_input](#append_input)
 
-In case you forget, we recommend you implement by inheriting the objects from Solution in packet_selection.py
-and Solution in congestion_control_algorithm.py and overwrite there methods.
+In case you forget, we recommend you implement by inheriting the objects from Solution in packet_selection.py and Solution in congestion_control_algorithm.py and overwrite these methods.
+
+Here is the explanations of [Input](#Input) and [Output](#Output) .
 
 ### packet_selection.py
 
@@ -90,7 +91,7 @@ For every packet in packet queue, it's implement in "objects/packet.py". But we 
 In this module, you have to implement a class with member function "make_decision" and "append_input". So we recommend you to accomplish this by inheriting from the object of "CongestionControl" implemented in "cc_base.py" in case you forget these. 
 
 Here we provided some simple algorithms about congestion control to help you being familiar with this competition.
-Like [Reno](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/player/examples/reno.py), [BBR](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/player/examples/simple_bbr.py) and an example about [reinforcement learning](https://github.com/Azson/DTP-emulator/blob/pcc-emulator/player/examples/RL.py) implemented by tensorflow.
+Like [Reno](https://github.com/AItransCompetition/DTP_Demo/blob/master/demo_reno.py) and an example about [reinforcement learning](https://github.com/AItransCompetition/DTP_Demo/blob/master/demo_rl.py) implemented by tensorflow.
 
 #### make_decision
 
@@ -105,13 +106,13 @@ For the member function "make_decision", we will call it every time I want to se
 
 #### append_input
 
-For item information in "_input_list",  it is a triad of **(event_time, packet_type, and packet)**. 
+For every item information in "_input_list",  it is a triad of **(event_time, event_type, and packet_information_dict)**. 
 
 - event_time
 
   > The time when the packet arrived.
 
-- packet_type
+- event_type
 
   > We divide the packet into three categories : PACKET_TYPE_FINISHED, PACKET_TYPE_TEMP, PACKET_TYPE_DROP.
   >
@@ -121,13 +122,21 @@ For item information in "_input_list",  it is a triad of **(event_time, packet_t
   >
   > PACKET_TYPE_DROP : The packet used to inform the source point of packet loss.
 
-- packet
+- packet_information_dict
 
   > The packet it the object implemented in "objects/packet.py". But we recommend you to get more information at [Packet](#packet-log) .
 
 Why we design a individual function to add element to "_input_list"?
 
 It's because there are some congestion control algorithm that need to update window size and send rate immediately. So you need to return a dictionary with window size and send rate if you want to do some changes as soon as the data is received , like [here](#make_decision).
+
+## The calculation of score
+
+We use this QOE function to calculate score of your solution :
+$$
+QOE = \sum_{block \in Blocks} \alpha*priority + \beta*Miss_ddl
+$$
+And here is [parameters' explanation](#Table-:-QOE_parameters).
 
 ## config
 
@@ -187,7 +196,7 @@ Here are all the objects that our system uses. You can get more details from our
 
 What I want to emphasize here is that, your congestion control module, which implemented in "player/congestion_control_algorithm.py", should inherit from the object of "CongestionControl" implemented in "cc_base.py". 
 
-We've provided some examples of classic congestion control algorithms in path "player/examples", like [Reno](https://en.wikipedia.org/wiki/TCP_congestion_control), [BBR](https://en.wikipedia.org/wiki/BBR) .
+We've provided some examples of classic congestion control algorithms in path "player/examples", like [Reno](https://en.wikipedia.org/wiki/TCP_congestion_control).
 
 ## output
 
@@ -208,7 +217,7 @@ For every row,  it's form like below：
     "Position": 0, 
     "Send_delay": 0.0, 
     "Pacing_delay": 0.0, 
-    "Lantency": 0.0, 
+    "Latency": 0.0, 
     "Drop": 0, 
     "Packet_id": 1, 
     "Create_time": 0.0, 
@@ -237,7 +246,7 @@ Here is every key's explanation：
 - Position : The position that packet on. It's 0 if packet on source'
 - Send_delay : The time that packet sent into window;
 - Pacing_delay : The time that packet send into network. It's used in the congestion control like BBR.
-- Lantency : The time that packet spending on links including queue delay and propagation delay;
+- Latency : The time that packet spending on links including queue delay and propagation delay;
 - Drop : Label whether the packet is dropped;
 - Packet_id : The Identity of packet;
 - Create_time : The time when the packet is created;
@@ -314,4 +323,85 @@ We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also c
 - [x] Add BBR congestion control module.
 - [x] Add AI congestion control module.
 - [x] Add QOE mudule.
-- [ ] Add system presentation PPT.
+- [x] Add system presentation PPT.
+
+# Appendix
+
+## Input
+
+|    变量名    |                             含义                             |                       样例                        |
+| :----------: | :----------------------------------------------------------: | :-----------------------------------------------: |
+|   cur_time   |                         当前时间(s)                          |                     0.0（s）                      |
+| packet_queue | 发送端当前待发送的包队列，其每个包的字段信息见表[packet_queue](#Table-:-packet_queue) |               [packet_1, packet_2]                |
+|     data     | 由接收端传回的ACK或Lost信息，其每个包的字段信息见表[data](#Table-:-data) | [event_time, event_type, packet_information_dict] |
+
+## Output
+
+|    变量名    |                    含义                    |     样例      |
+| :----------: | :----------------------------------------: | :-----------: |
+| packet_index | 当前时刻要发送的包在packet_queue中的索引值 |    1(int)     |
+|     Cwnd     |        发送端当前时刻的拥塞窗口大小        | 10（packet）  |
+|  Send_rate   |        发送端当前时刻的发送速率大小        | 5（packet/s） |
+
+## Table : packet_queue
+
+|   变量名    |                             含义                             |     样例      |
+| :---------: | :----------------------------------------------------------: | :-----------: |
+| packet_type |      包类型，分'S'和'A'两种，分别表示发送过程和确认过程      |   A（str）    |
+| create_time |                        该包的创建时间                        |   0.1（s）    |
+|   offset    |                  该包在其所属Block中的偏移                   |   1（int）    |
+|  packet_id  |                      该包的ID，全局唯一                      |   1（int）    |
+|   payload   |             该包实际有效的Block数据大小（Bytes）             | 1480（Bytes） |
+| packet_size |                     该包实际大小(Bytes)                      | 1500（Bytes） |
+| block_info  | 该包所属Block的信息，类型为dict，其所含字段信息见表[block_info](#Table-:-block_info) |   0.0（s）    |
+
+## Table : block_info
+
+|   变量名    |            含义            |      样例       |
+| :---------: | :------------------------: | :-------------: |
+|  Block_id   |    Block的ID，全局唯一     |    1（int）     |
+|  Priority   | Block的优先级，取值0、1和2 |    1（int）     |
+|  Deadline   |    Block的过期时间大小     |    0.2（s）     |
+| Create_time |      Block的创建时刻       |    0.1（s）     |
+|    Size     |     Block的大小(Bytes)     | 200000（Bytes） |
+
+## Table : data
+
+|         变量名          |                             含义                             |   样例   |
+| :---------------------: | :----------------------------------------------------------: | :------: |
+|       event_time        |                         当前时间(s)                          | 0.1（s） |
+|       event_type        | 该包的事件类型，取值可为F、D和T，分别表示完成包、丢弃包和中间状态包（即除前2种外的包） | F（str） |
+| packet_information_dict | 该包的简要信息组成的字典，其每个包的字段信息见表[packet_information_dict](#Table-:-packet_information_dict) |          |
+
+## Table : packet_information_dict
+
+|    变量名    |                             含义                             |     样例     |
+| :----------: | :----------------------------------------------------------: | :----------: |
+|     Type     |      包类型，分'S'和'A'两种，分别表示发送过程和确认过程      |   S（str）   |
+|   Position   |               该包所处位置，当其在发送端时为0                |   0（int）   |
+|  Send_delay  |                           发送时延                           |   0.1（s）   |
+| Pacing_delay |        Pacing时延，如BBR之类的拥塞算法会使用到的概念         |   0.0（s）   |
+|   Latency   | 该包在链路中所花费的时延，包括所有已经过的跳的排队时延和链路的传播时延 |   0.2（s）   |
+|     Drop     |                该包是否是一个表示丢弃信息的包                |   0（int)    |
+|  Packet_id   |                      该包的ID，全局唯一                      |  100（int）  |
+| Create_time  |                        该包的创建时间                        |   0.0（s）   |
+|    Offset    |                  该包在其所属Block中的偏移                   |   0（int）   |
+|   Payload    |              该包实际有效的Block数据大小(Bytes)              | 1480（Byte） |
+| Packet_size  |                     该包实际大小(Bytes)                      | 1500（Byte） |
+|  Block_info  | 该包所属Block的信息，类型为dict，其所含字段信息见表[block_info](#Table-:-block_info) |              |
+|    Extra     | 额外信息，这个字段提供给选手可以添加自定义的信息，每次发包的时候会调用选手模块中的“make_decision”函数，获取其所返回的最新Extra字段信息，填充到该包中，其可能包含字段信息见表[Extra](Table-:-Extra) |              |
+
+## Table : Extra
+
+|  变量名   |                             含义                             |     样例      |
+| :-------: | :----------------------------------------------------------: | :-----------: |
+|   Cwnd    | 发送端当前时刻的拥塞窗口大小，单位为包，当且仅当使用拥塞窗口时才有效 |  5 (packet)   |
+| Send_rate | 发送端当前时刻的发送速率大小，单位为包/s，当前仅当选手使用rate-based拥塞算法有效 | 10 (packet/s) |
+
+## Table : QOE_parameters
+
+|   指标   |            含义            | 样例    |
+| :------: | :------------------------: | ------- |
+| Priority | block的优先级，取值0、1和2 | 0 (int) |
+| Miss_ddl |   block是否miss deadline   | 1 (int) |
+

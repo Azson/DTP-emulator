@@ -3,7 +3,7 @@ from utils import measure_time
 
 class Solution(object):
 
-    @measure_time()
+    # @measure_time()
     def select_packet(self, cur_time, packet_queue):
         '''
         The alogrithm to select the packet which will be sended in next.
@@ -13,10 +13,17 @@ class Solution(object):
         :return: int
         '''
         def is_better(packet):
-            if best_packet.create_time != packet.create_time:
-                return best_packet.create_time > packet.create_time
-            return (cur_time - packet.create_time) * best_packet.block_info["Deadline"] > \
-                    (cur_time - best_packet.create_time) * packet.block_info["Deadline"]
+            best_block_create_time = best_packet.block_info["Create_time"]
+            packet_block_create_time = packet.block_info["Create_time"]
+            # if packet is miss ddl
+            if (cur_time - packet_block_create_time) >= packet.block_info["Deadline"]:
+                return False
+            if (cur_time - best_block_create_time) >= best_packet.block_info["Deadline"]:
+                return True
+            if best_block_create_time != packet_block_create_time:
+                return best_block_create_time > packet_block_create_time
+            return (cur_time - best_block_create_time) * best_packet.block_info["Deadline"] > \
+                   (cur_time - packet_block_create_time) * packet.block_info["Deadline"]
 
         best_packet_idx = -1
         best_packet = None

@@ -55,7 +55,7 @@ class Sender():
         """initial the sender's application which will send packet to it."""
         self.application = Appication_Layer(block_file, bytes_per_packet=BYTES_PER_PACKET, **kwargs)
 
-    @measure_time()
+    # @measure_time()
     def new_packet(self, cur_time, mode):
         """get new packet from it's application."""
         if self.application:
@@ -74,7 +74,7 @@ class Sender():
             if item.is_miss_ddl(cur_time):
                 self.wait_for_select_packets.pop(idx)
 
-    @measure_time()
+    # @measure_time()
     def select_packet(self, cur_time):
         """
         select the packet that will be sent at time of "cur_time".
@@ -84,17 +84,22 @@ class Sender():
         :param cur_time:
         :return:
         """
-        while True:
-            # if there is no packet can be sended, we need to send packet that created after cur_time
-            packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) == 0 else None)
-            if not packet:
-                break
-            self.wait_for_select_packets.append(packet)
-            # for multi flow
-            if self.application is None:
-                break
         # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
         # self.clear_miss_ddl(cur_time)
+        # import time
+        # st = time.time()
+        while True:
+            # if there is no packet can be sended, we need to send packet that created after cur_time
+            packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) + len(self.wait_for_push_packets) == 0 else None)
+            if not packet:
+                break
+            # st = time.time()
+            self.wait_for_select_packets.append(packet)
+            # print("0 cost time {}".format(time.time() - st))
+            # for multi flow
+            if self.application is None:
+                return self.wait_for_select_packets.pop(0)
+        # print("1 cost time {}".format(time.time()-st))
         if constant.ENABLE_HASH_CHECK:
             last_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
         # print("wait for select %d, already send %d" % (len(self.wait_for_select_packets), self.sent))
@@ -104,8 +109,10 @@ class Sender():
             now_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
             if last_hash_vals != now_hash_vals:
                 raise ValueError("You shouldn't change the packet information in system!")
+        # st = time.time()
         if isinstance(packet_idx, int) and packet_idx >= 0:
             return self.wait_for_select_packets.pop(packet_idx)
+        # print("2 cost time {}".format(time.time() - st))
         return None
 
     def apply_rate_delta(self, delta):
@@ -184,7 +191,7 @@ class Sender():
         self.bytes_in_flight -= BYTES_PER_PACKET
         # do retrans if lost
         retrans_packet = packet.create_retrans_packet(event_time)
-        self.wait_for_push_packets.append([event_time, self, retrans_packet])
+        self.wait_for_select_packets.append(retrans_packet)
 
     def set_rate(self, new_rate):
         self.rate = new_rate
@@ -243,7 +250,7 @@ class Sender():
 
     def print_debug(self):
         print("Sender: %d" % (self.id))
-        print("Obs: %s" % str(self.get_obs()))
+        # print("Obs: %s" % str(self.get_obs()))
         print("Rate: %f" % self.rate)
         print("Sent: %d" % self.sent)
         print("Acked: %d" % self.acked)

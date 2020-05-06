@@ -46,7 +46,7 @@ class Engine():
 
         while self.cur_time < end_time:
             if len(self.q) == 0:
-                self.close()
+                print("Time {}s : There is no packet from application~".format(self.cur_time))
                 return
 
             event_time, sender, packet = heapq.heappop(self.q)
@@ -80,6 +80,8 @@ class Engine():
                         # continue ack may use same inflight numbers which will be limited to cwnd but redundancy in log
                         for _packet in sender.slide_windows(self.cur_time, sender.in_event_nums):
                             sender.in_event_nums += 1
+                            # print("Now {}, packet id {}, create time {}".format(self.cur_time, _packet.packet_id, _packet.create_time))
+                            # print("wait for push set {}".format(set([item[2].create_time for item in sender.wait_for_push_packets])))
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
 
@@ -132,7 +134,7 @@ class Engine():
                 packet.latency = new_latency
                 packet.drop = new_dropped
                 heapq.heappush(self.q, (new_event_time, sender, packet))
-
+        self.close()
         sender_mi = self.senders[0].get_run_data()
         throughput = sender_mi.get("recv rate")
         latency = sender_mi.get("avg latency")
@@ -203,6 +205,7 @@ class Engine():
             log_data["Extra"]["Send_rate"] = sender.rate
         # log_data["Extra"]["in_event_nums"] = sender.in_event_nums
         # log_data["Extra"]["wait_for_select"] = len(sender.wait_for_select_packets)
+        # log_data["Extra"]["wait_for_push"] = len(sender.wait_for_push_packets)
         with open(get_true_log_file(), "a") as f:
             f.write(json.dumps(log_data, ensure_ascii = False)+"\n")
         self.log_items += 1
@@ -211,7 +214,7 @@ class Engine():
     def append_cc_input(self, event_time, sender, packet, event_type="packet"):
         """push the acked or lost packet event to it's sender"""
         # only use the solution's sender
-        if sender.id != 1:
+        if sender.id != self.senders[0].id:
             return
         if event_type == "packet":
             data = {
@@ -234,7 +237,7 @@ class Engine():
 
     def close(self):
         """close all the application before closing this system."""
-        print("Time {}s : There is no packet from application~".format(self.cur_time))
+
         for sender in self.senders:
             debug_print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
             if sender.application:
