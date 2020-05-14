@@ -20,11 +20,12 @@ def cal_qoe(x=0.82):
     urgency = []
     priorities = []
     qoe = 0
+    tmp = [3, 2, 1]
     with open("output/block.log", "r") as f:
         for line in f.readlines():
             block_data.append(json.loads(line.replace("'", '"')))
     for block in block_data:
-        priority = float((int(block['Priority']) + 1) / 3)
+        priority = float(tmp[int(block['Priority'])] / 3)
         priorities.append(priority)
         if block['Miss_ddl'] == 0:
             urgency.append(1)
