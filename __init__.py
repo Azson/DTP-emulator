@@ -37,12 +37,13 @@ new_trace_file = parentdir+"/simple_emulator"+"scripts/first_group/traces_1.txt"
 new_block_files = [parentdir+"/simple_emulator"+"config/data_video.csv", parentdir+"/simple_emulator"+"config/data_audio.csv"]
 
 try:
-    if platform.system() == "Windows":
-        # for windows
-        os.system("rmdir /Q /S output")
-    else:
-        # for linux
-        os.system("rm -rf output")
+    if os.path.exists("output"):
+        if platform.system() == "Windows":
+            # for windows
+            os.system("rmdir /Q /S output")
+        else:
+            # for linux
+            os.system("rm -rf output")
 
     # os.rmdir("output")
     os.mkdir("output")

@@ -35,6 +35,7 @@ class Appication_Layer(object):
 
     def update_config(self, extra):
         self.extra["ENABLE_BLOCK_LOG"] = extra["ENABLE_BLOG_LOG"] if "ENABLE_BLOCK_LOG" in extra else True
+        self.run_dir = extra["RUN_DIR"]+'/' if "RUN_DIR" in extra else ''
 
     def handle_block(self, block_file):
         """
@@ -201,7 +202,7 @@ class Appication_Layer(object):
             return
         if self.fir_log:
             self.fir_log = False
-            with open("output/block.log", "w") as f:
+            with open(self.run_dir+"output/block.log", "w") as f:
                 pass
 
         if not self.is_sent_block(block.block_id):
@@ -209,7 +210,7 @@ class Appication_Layer(object):
         if block.is_miss_ddl():
             block.miss_ddl = 1
 
-        with open("output/block.log", "a") as f:
+        with open(self.run_dir+"output/block.log", "a") as f:
             f.write(json.dumps(block.trans2dict())+'\n')
 
     def is_sent_block(self, block_id):

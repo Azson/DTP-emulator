@@ -9,7 +9,7 @@
 '''
 
 import time, json
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 from config.constant import *
 from config import constant
@@ -53,7 +53,7 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     if isinstance(rows, int):
         plt_data = plt_data[:rows]
 
-    pic_nums = 2
+    pic_nums = 1
     font_size = 50
     tick_size = 50
 
@@ -109,19 +109,19 @@ def analyze_pcc_emulator(log_file, trace_file=None, rows=None, time_range=None, 
     # plt.tick_params(labelsize=tick_size)
 
     # plot latency distribution
-    ax = plt.subplot(pic_nums, 1, 2)
-    ax.set_title("Acked packet RTT distribution", fontsize=font_size)
-    ax.set_ylabel("RTT / s", fontsize=font_size)
-    ax.set_xlabel("Time / s", fontsize=font_size)
-    # ax.set_ylim(-np.min(data_sum_time)*2, np.max(data_sum_time)*2)
-
-    ax.plot(data_finish_time, data_sum_time, label="Latency", linewidth=5)
-    # plot average latency
-    ax.plot([0, data_finish_time[-1]], [np.mean(data_sum_time)] * 2, label="Average Rtt",
-            c='r', linewidth=5)
-
-    # ax.set_xlim(data_finish_time[0]/2, data_finish_time[-1]*1.5)
-    plt.tick_params(labelsize=tick_size)
+    # ax = plt.subplot(pic_nums, 1, 2)
+    # ax.set_title("Acked packet RTT distribution", fontsize=font_size)
+    # ax.set_ylabel("RTT / s", fontsize=font_size)
+    # ax.set_xlabel("Time / s", fontsize=font_size)
+    # # ax.set_ylim(-np.min(data_sum_time)*2, np.max(data_sum_time)*2)
+    #
+    # ax.plot(data_finish_time, data_sum_time, label="Latency", linewidth=5)
+    # # plot average latency
+    # ax.plot([0, data_finish_time[-1]], [np.mean(data_sum_time)] * 2, label="Average Rtt",
+    #         c='r', linewidth=5)
+    #
+    # # ax.set_xlim(data_finish_time[0]/2, data_finish_time[-1]*1.5)
+    # plt.tick_params(labelsize=tick_size)
     handles, labels = ax.get_legend_handles_labels()
 
     # plot bandwith
@@ -319,7 +319,7 @@ def plot_trace(data_time, ax, font_size, tick_size, trace_file):
     return ax
 
 
-def plot_rate(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
+def plot_send_rate(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
     plt_data = []
     if file_range:
         plt_data = compose_packet_logs(file_range)
@@ -376,7 +376,7 @@ def plot_rate(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
         labels.extend(tmp_ax.get_legend_handles_labels()[1])
 
     plt.legend(handles, labels, fontsize=font_size)
-    plt.savefig("output/rate_changing.png")
+    plt.savefig("output/send_rate_changing.png")
 
 
 def plot_bbr(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None):
@@ -445,7 +445,66 @@ def plot_bbr(log_file, rows=None, trace_file=None, time_range=None, scatter=Fals
         labels.extend(tmp_ax.get_legend_handles_labels()[1])
 
     plt.legend(handles, labels, fontsize=font_size)
-    plt.savefig("output/throughput_changing.png")
+    plt.savefig("output/bbr_changing.png")
+    plt.show()
+
+
+def plot_rate(log_file, rows=None, trace_file=None, time_range=None, scatter=False, file_range=None, sender=None, size=1):
+    plt_data = []
+    if file_range:
+        plt_data = compose_packet_logs(file_range)
+    else:
+        with open(log_file, 'r') as f:
+            for line in f.readlines():
+                plt_data.append(json.loads(line.replace("'", '"')))
+    if not sender:
+        sender = [1]
+    # filter the packet at receiver
+    plt_data = list(
+        filter(lambda x: x["Type"] == 'S' and x["Position"] == 0 and x["Drop"] == 0 and x["Sender_id"] in sender,
+               plt_data))
+    # filter by the time
+    if time_range:
+        plt_data = time_filter(plt_data, time_range)
+    # plot "rows" counts data
+    if isinstance(rows, int):
+        plt_data = plt_data[:rows]
+
+    pic_nums = 1
+    font_size = 50
+    tick_size = 50
+
+    last_idx = 0
+    data_time = []
+    data_rate = []
+    for idx, item in enumerate(plt_data):
+        while plt_data[last_idx]["Time"] + size < item["Time"]:
+            last_idx += 1
+        if idx != last_idx and item["Time"] - plt_data[idx-1]["Time"] > 0.000001:
+            # print(idx, last_idx, item["Time"], plt_data[last_idx]["Time"])
+            data_time.append(item["Time"])
+            data_rate.append((idx-last_idx+1)/(item["Time"] - plt_data[last_idx]["Time"]))
+
+    pic = plt.figure(figsize=(50, 30 * pic_nums))
+    # plot rate changing
+    ax = plt.subplot(pic_nums, 1, 1)
+    if scatter:
+        ax.scatter(data_time, data_rate, label="Rate", c='black', s=200)
+    else:
+        ax.plot(data_time, data_rate, label="Rate", c='black', linewidth=5)
+    ax.set_ylabel("Packet Numbers", fontsize=font_size)
+    ax.set_xlabel("Time / s", fontsize=font_size)
+    plt.tick_params(labelsize=tick_size)
+    handles, labels = ax.get_legend_handles_labels()
+
+    # plot bandwith
+    if trace_file:
+        tmp_ax = plot_trace(data_time, ax, font_size, tick_size, trace_file)
+        handles.extend(tmp_ax.get_legend_handles_labels()[0])
+        labels.extend(tmp_ax.get_legend_handles_labels()[1])
+
+    plt.legend(handles, labels, fontsize=font_size)
+    plt.savefig("output/rate_changing.png")
 
 
 if __name__ == '__main__':
