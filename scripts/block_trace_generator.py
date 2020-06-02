@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 from player.aitrans_3 import Solution as s3
 from player.aitrans_solution import Solution as s1
 from player.aitrans_solution2 import Solution as s2
-from objects.pcc_emulator import PccEmulator
+from objects.emulator import Emulator
 from qoe_model import cal_qoe
 
 
@@ -177,7 +177,7 @@ def test_score(block_files, trace_file, solution=None):
     if solution is None:
         solution = s3()
         solution.init_trace(trace_file)
-    emulator3 = PccEmulator(
+    emulator3 = Emulator(
         block_file=block_files,
         trace_file=trace_file,
         solution=solution,
