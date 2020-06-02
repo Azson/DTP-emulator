@@ -51,7 +51,7 @@ class Engine():
         while self.cur_time < end_time:
             if len(self.q) == 0:
                 print("Time {}s : There is no packet from application~".format(self.cur_time))
-                return
+                break
 
             event_time, sender, packet = heapq.heappop(self.q)
             self.log_packet(event_time, sender, packet)

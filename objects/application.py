@@ -63,12 +63,24 @@ class Appication_Layer(object):
         for idx in range(shape[0]):
             det = 1
             priority = 0
+            deadline = 0.2
+            # change priority
             if "video" in csv_file:
                 priority = 2
             elif "audio" in csv_file:
                 priority = 1
+            if "priority-" in csv_file:
+                priority = csv_file[int(csv_file.index("priority-") + len("priority-"))]
+            # change deadline
+            if "ddl-" in csv_file:
+                idx = csv_file.index("ddl-") + len("ddl-")
+                for i in range(idx, len(csv_file)):
+                    if csv_file[i] == '-':
+                        deadline = float(csv_file[idx:i])
+                        break
+            # create block
             block = Block(bytes_size=float(df_data["size"][idx])*det,
-                          deadline=0.2,
+                          deadline=deadline,
                           priority=priority,
                           timestamp=float(df_data["time"][idx]))
             self.block_queue.append(block)

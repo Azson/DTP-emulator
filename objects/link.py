@@ -68,6 +68,8 @@ class Link():
                 break
             if event_time + transmition_time > self.trace_list[i][0]:
                 self.bandwith = self.trace_list[i][1] * 10 ** 6 / BYTES_PER_PACKET
+                self.loss_rate = self.trace_list[i][2]
+                self.delay = self.trace_list[i][3]
                 continue
 
             used_time = rest_block_size / self.bandwith

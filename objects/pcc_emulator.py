@@ -80,7 +80,6 @@ class PccEmulator(object):
                     if platform.system() == "Windows":
                         # for windows
                         os.system("rmdir /Q /S \"" + extra["RUN_DIR"] + "/output\"")
-                        print("rmdir /Q /S \"" + extra["RUN_DIR"] + "/output\"")
                     else:
                         # for linux
                         os.system("rm -rf \"" + extra["RUN_DIR"] + "/output")
