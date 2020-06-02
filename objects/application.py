@@ -35,6 +35,7 @@ class Appication_Layer(object):
 
     def update_config(self, extra):
         self.extra["ENABLE_BLOCK_LOG"] = extra["ENABLE_BLOG_LOG"] if "ENABLE_BLOCK_LOG" in extra else True
+        self.run_dir = extra["RUN_DIR"]+'/' if "RUN_DIR" in extra else ''
 
     def handle_block(self, block_file):
         """
@@ -62,12 +63,24 @@ class Appication_Layer(object):
         for idx in range(shape[0]):
             det = 1
             priority = 0
+            deadline = 0.2
+            # change priority
             if "video" in csv_file:
-                priority = 1
-            elif "audio" in csv_file:
                 priority = 2
+            elif "audio" in csv_file:
+                priority = 1
+            if "priority-" in csv_file:
+                priority = csv_file[int(csv_file.index("priority-") + len("priority-"))]
+            # change deadline
+            if "ddl-" in csv_file:
+                idx = csv_file.index("ddl-") + len("ddl-")
+                for i in range(idx, len(csv_file)):
+                    if csv_file[i] == '-':
+                        deadline = float(csv_file[idx:i])
+                        break
+            # create block
             block = Block(bytes_size=float(df_data["size"][idx])*det,
-                          deadline=0.2,
+                          deadline=deadline,
                           priority=priority,
                           timestamp=float(df_data["time"][idx]))
             self.block_queue.append(block)
@@ -201,7 +214,7 @@ class Appication_Layer(object):
             return
         if self.fir_log:
             self.fir_log = False
-            with open("output/block.log", "w") as f:
+            with open(self.run_dir+"output/block.log", "w") as f:
                 pass
 
         if not self.is_sent_block(block.block_id):
@@ -209,7 +222,7 @@ class Appication_Layer(object):
         if block.is_miss_ddl():
             block.miss_ddl = 1
 
-        with open("output/block.log", "a") as f:
+        with open(self.run_dir+"output/block.log", "a") as f:
             f.write(json.dumps(block.trans2dict())+'\n')
 
     def is_sent_block(self, block_id):

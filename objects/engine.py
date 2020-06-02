@@ -6,7 +6,8 @@ from config import constant
 
 class Engine():
 
-    def __init__(self, senders, links):
+    def __init__(self, senders, links, **kwargs):
+        self.update_config(kwargs)
         self.q = []
         self.cur_time = 0.0
         self.senders = senders
@@ -17,6 +18,9 @@ class Engine():
         self.log_packet_file = "output/packet_log/packet-0.log"
         self.log_items = 0
         self.last_alert_time = 0
+
+    def update_config(self, extra):
+        self.run_dir = extra["RUN_DIR"]+'/' if "RUN_DIR" in extra else ''
 
     def queue_initial_packets(self):
         """initial the packet queue in network"""
@@ -47,7 +51,7 @@ class Engine():
         while self.cur_time < end_time:
             if len(self.q) == 0:
                 print("Time {}s : There is no packet from application~".format(self.cur_time))
-                return
+                break
 
             event_time, sender, packet = heapq.heappop(self.q)
             self.log_packet(event_time, sender, packet)
@@ -179,8 +183,8 @@ class Engine():
                 file_nums = self.log_items // constant.MAX_PACKET_LOG_ROWS
                 if self.log_items and self.log_items % constant.MAX_PACKET_LOG_ROWS == 0:
                     self.fir_log = True
-                return self.log_packet_file.replace('0', str(file_nums))
-            return self.log_packet_file
+                return self.run_dir + self.log_packet_file.replace('0', str(file_nums))
+            return self.run_dir + self.log_packet_file
 
         if constant.ENABLE_DEBUG and event_time - self.last_alert_time >= ALERT_CIRCLE:
             self.last_alert_time = event_time

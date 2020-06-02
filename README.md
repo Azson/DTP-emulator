@@ -14,24 +14,24 @@ There may be some differences between this and below. But you can finished accor
 - create your module
 
 ```python
-from simple_emulator import Packet_selection, CongestionControl
+from simple_emulator import PacketSelection, CongestionControl
 
 
 # Your solution should include packet selection and congestion control.
 # So, we recommend you to achieve it by inherit the objects we provided and overwritten necessary method.
-class Solution(Packet_selection, CongestionControl):
+class Solution(PacketSelection, CongestionControl):
     pass
 ```
 
 - create emulator
 
 ```python
-from simple_emulator import PccEmulator
+from simple_emulator import Emulator
 
 
 # Use the object you created above
 my_solution = Solution()
-emulator = PccEmulator(solution=my_solution)
+emulator = Emulator(solution=my_solution)
 ```
 
 - run emualtor
@@ -304,15 +304,15 @@ We put the draw function in the "plot_cwnd" of "utils.py". You can specify the v
 
 ![cwnd_changing](output/cwnd_changing.png)
 
-### pcc_emulator-analysis.png
+### emulator-analysis.png
 
 Here we provided a simple schematic diagram of latency of packets change process according to partial packet log.
 
 The horizontal axis is the time(seconds), the left vertical axis is the latency of packets. So solid lines represent latency changes. And the cross indicates that the packet was lost at this time.
 
-We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also can describe these parameters mentioned above and do some customization, like "rows", "time_range" and "scatter".
+We put the draw function in the "analyze_emulator" of "utils.py". You also can describe these parameters mentioned above and do some customization, like "rows", "time_range" and "scatter".
 
-![emulator-analysis](output/pcc_emulator-analysis.png)
+![emulator-analysis](output/emulator-analysis.png)
 
 ### throughput_changing.png
 
@@ -397,6 +397,7 @@ We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also c
 | :-------: | :----------------------------------------------------------: | :-----------: |
 |   Cwnd    | 发送端当前时刻的拥塞窗口大小，单位为包，当且仅当使用拥塞窗口时才有效 |  5 (packet)   |
 | Send_rate | 发送端当前时刻的发送速率大小，单位为包/s，当前仅当选手使用rate-based拥塞算法有效 | 10 (packet/s) |
+| inflight | 当前时刻发送端已发送但未收到ack或lost信息的包的数量 | 10 (packet) |
 
 ## Table : QOE_parameters
 

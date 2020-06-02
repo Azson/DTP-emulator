@@ -1,6 +1,7 @@
-from player.congestion_control_algorithm import Solution as Cc_solution
-from player.packet_selection import Solution as Packet_solution
+from player.congestion_control_algorithm import Solution as CcSolution
+from player.packet_selection import Solution as PacketSelection
 from player.examples.reno import Reno
 
-class Solution(Reno, Packet_solution):
+
+class Solution(Reno, PacketSelection):
     pass

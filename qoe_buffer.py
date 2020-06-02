@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from objects.pcc_emulator import PccEmulator
+from objects.emulator import Emulator
 import os, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     block_file = "config/block.txt"
     trace_file = "config/trace.txt"
     new_trace_file = "scripts/first_group/traces_51.txt"
-    log_file = "output/pcc_emulator.log"
+    log_file = "output/emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
     pic = "qoemodel/qoes_buffer.png"
     idx, size = "queue_size", 50

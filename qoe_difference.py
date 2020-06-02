@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from objects.pcc_emulator import PccEmulator
+from objects.emulator import Emulator
 import os, sys, inspect
 from config.constant import *
 import numpy as np
@@ -11,7 +11,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import matplotlib.pyplot as plt
 import numpy as np
-import json
+import json, time
 
 from player.aitrans_solution import Solution as s1
 from player.aitrans_solution2 import Solution as s2
@@ -41,33 +41,39 @@ def cal_distance_double(block_file, trace_file, x):
 
 
 def cal_distance_single(block_file, trace_file, x):
-    emulator1 = PccEmulator(
+    emulator1 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         solution=s1(),
-        USE_CWND=True
+        USE_CWND=True,
+        SEED=1,
+        ENABLE_LOG=False
     )
-    emulator1.run_for_dur()
+    emulator1.run_for_dur(51)
     reno_qoe = cal_qoe(x)
 
-    emulator2 = PccEmulator(
+    emulator2 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         solution=s2(),
-        USE_CWND=True
+        USE_CWND=True,
+        SEED=1,
+        ENABLE_LOG=False
     )
-    emulator2.run_for_dur()
+    emulator2.run_for_dur(51)
     bbr_qoe = cal_qoe(x)
 
     tmp = s3()
     tmp.init_trace(trace_file)
-    emulator3 = PccEmulator(
+    emulator3 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         solution=tmp,
-        USE_CWND=False
+        USE_CWND=False,
+        SEED=1,
+        ENABLE_LOG=False
     )
-    emulator3.run_for_dur()
+    emulator3.run_for_dur(51)
     mtr_qoe = cal_qoe(x)
     return [reno_qoe, bbr_qoe, mtr_qoe]
 
@@ -88,17 +94,24 @@ def plt_qoe(reno_arr, bbr_arr, pic, xidx, size, mtr_arr=None):
 if __name__ == '__main__':
 
     block_file = "config/block.txt"
-    log_file = "output/pcc_emulator.log"
+    log_file = "output/emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
     pic = "qoemodel/qoe_difference.png"
-    idx,size = "trace_index",10
+    idx,size = "trace_index",12
     x = 0.82
     reno_arr = []
     bbr_arr = []
     mtr_arr = []
-    for j in range(1, 101, 10):
+    new_blocks = ["config/block_2/data_video.csv", "config/block_2/data_audio.csv"]
+    new_blocks_1 = ["config/block_1/block/1/data_video.csv", "config/block_1/block/1/data_audio.csv"]
+    new_blocks_2 = ["scripts/block_5-26-1.csv"]
+    for j in range(120, 1, -10):
         trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
-        qoe_difference = cal_distance_double(block_file, trace_file, x)
+        st = time.time()
+        print("traces {0}, start_time {1}".format(j, st))
+        qoe_difference = cal_distance_single(new_blocks_2, trace_file, x)
+        ed = time.time()
+        print("end_time {0}, cost {1}".format(ed, ed-st))
         reno_arr.append(qoe_difference[0])
         bbr_arr.append(qoe_difference[1])
         mtr_arr.append(qoe_difference[2])
@@ -111,7 +124,8 @@ if __name__ == '__main__':
                 "bw : 0.1 ~ 2 MB \n",
                 "qoe = " + str(x) + " * priority + "+ str(1 - x) + " * deadline\n",
                 str(reno_arr) + "\n",
-                str(bbr_arr)]
+                str(bbr_arr) + "\n",
+                str(mtr_arr)]
         f.writelines(strs)
 
 
