@@ -397,6 +397,7 @@ We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also c
 | :-------: | :----------------------------------------------------------: | :-----------: |
 |   Cwnd    | 发送端当前时刻的拥塞窗口大小，单位为包，当且仅当使用拥塞窗口时才有效 |  5 (packet)   |
 | Send_rate | 发送端当前时刻的发送速率大小，单位为包/s，当前仅当选手使用rate-based拥塞算法有效 | 10 (packet/s) |
+| inflight | 当前时刻发送端已发送但未收到ack或lost信息的包的数量 | 10 (packet) |
 
 ## Table : QOE_parameters
 
