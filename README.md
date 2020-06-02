@@ -14,24 +14,24 @@ There may be some differences between this and below. But you can finished accor
 - create your module
 
 ```python
-from simple_emulator import Packet_selection, CongestionControl
+from simple_emulator import PacketSelection, CongestionControl
 
 
 # Your solution should include packet selection and congestion control.
 # So, we recommend you to achieve it by inherit the objects we provided and overwritten necessary method.
-class Solution(Packet_selection, CongestionControl):
+class Solution(PacketSelection, CongestionControl):
     pass
 ```
 
 - create emulator
 
 ```python
-from simple_emulator import PccEmulator
+from simple_emulator import Emulator
 
 
 # Use the object you created above
 my_solution = Solution()
-emulator = PccEmulator(solution=my_solution)
+emulator = Emulator(solution=my_solution)
 ```
 
 - run emualtor
@@ -304,15 +304,15 @@ We put the draw function in the "plot_cwnd" of "utils.py". You can specify the v
 
 ![cwnd_changing](output/cwnd_changing.png)
 
-### pcc_emulator-analysis.png
+### emulator-analysis.png
 
 Here we provided a simple schematic diagram of latency of packets change process according to partial packet log.
 
 The horizontal axis is the time(seconds), the left vertical axis is the latency of packets. So solid lines represent latency changes. And the cross indicates that the packet was lost at this time.
 
-We put the draw function in the "analyze_pcc_emulator" of "utils.py". You also can describe these parameters mentioned above and do some customization, like "rows", "time_range" and "scatter".
+We put the draw function in the "analyze_emulator" of "utils.py". You also can describe these parameters mentioned above and do some customization, like "rows", "time_range" and "scatter".
 
-![emulator-analysis](output/pcc_emulator-analysis.png)
+![emulator-analysis](output/emulator-analysis.png)
 
 ### throughput_changing.png
 

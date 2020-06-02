@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from objects.pcc_emulator import PccEmulator
+from objects.emulator import Emulator
 import os, sys, inspect
 from config.constant import *
 import numpy as np
@@ -59,7 +59,7 @@ def cal_nums():
 
 
 def cal_distance(block_file, trace_file, x):
-    emulator1 = PccEmulator(
+    emulator1 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         queue_range=(MIN_QUEUE, MAX_QUEUE),
@@ -74,7 +74,7 @@ def cal_distance(block_file, trace_file, x):
     reno_nums = cal_nums()
     shutil.copyfile("output/block.log", "qoe_test/reno/" + trace_file.split('/')[-1])
 
-    emulator2 = PccEmulator(
+    emulator2 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         queue_range=(MIN_QUEUE, MAX_QUEUE),
@@ -104,7 +104,7 @@ def plot_rate(data):
 if __name__ == '__main__':
 
     block_file = "config/block.txt"
-    log_file = "output/pcc_emulator.log"
+    log_file = "output/emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
     new_block_files = ["config/data_video-2.csv", "config/data_audio-2.csv"]
     new_block_file_1 = ["scripts/block_5-27-7.csv"]

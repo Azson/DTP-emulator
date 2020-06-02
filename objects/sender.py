@@ -42,6 +42,8 @@ class Sender():
         # for player
         self.wait_for_select_packets = []
         self.in_event_nums = 0
+        # record packet's decision order
+        self.decision_order = 0
 
     _next_id = 1
 
@@ -86,33 +88,28 @@ class Sender():
         """
         # Is it necessary ? Reduce system burden by delete the packets missing ddl in time
         # self.clear_miss_ddl(cur_time)
-        # import time
-        # st = time.time()
         while True:
             # if there is no packet can be sended, we need to send packet that created after cur_time
             packet = self.new_packet(cur_time, "force" if len(self.wait_for_select_packets) + len(self.wait_for_push_packets) == 0 else None)
             if not packet:
                 break
-            # st = time.time()
             self.wait_for_select_packets.append(packet)
-            # print("0 cost time {}".format(time.time() - st))
             # for multi flow
             if self.application is None:
                 return self.wait_for_select_packets.pop(0)
-        # print("1 cost time {}".format(time.time()-st))
         if constant.ENABLE_HASH_CHECK:
             last_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
-        # print("wait for select %d, already send %d" % (len(self.wait_for_select_packets), self.sent))
         packet_idx = self.solution.select_packet(cur_time, self.wait_for_select_packets)
         # use hash for safety
         if constant.ENABLE_HASH_CHECK:
             now_hash_vals = [item.get_hash_val() for item in self.wait_for_select_packets]
             if last_hash_vals != now_hash_vals:
                 raise ValueError("You shouldn't change the packet information in system!")
-        # st = time.time()
         if isinstance(packet_idx, int) and packet_idx >= 0:
+            # set decision order in packet
+            self.decision_order += 1
+            self.wait_for_select_packets[packet_idx].decision_order = self.decision_order
             return self.wait_for_select_packets.pop(packet_idx)
-        # print("2 cost time {}".format(time.time() - st))
         return None
 
     def apply_rate_delta(self, delta):

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from objects.pcc_emulator import PccEmulator
+from objects.emulator import Emulator
 import os, sys, inspect
 from config.constant import *
 import numpy as np
@@ -41,7 +41,7 @@ def cal_distance_double(block_file, trace_file, x):
 
 
 def cal_distance_single(block_file, trace_file, x):
-    emulator1 = PccEmulator(
+    emulator1 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         solution=s1(),
@@ -52,7 +52,7 @@ def cal_distance_single(block_file, trace_file, x):
     emulator1.run_for_dur(51)
     reno_qoe = cal_qoe(x)
 
-    emulator2 = PccEmulator(
+    emulator2 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         solution=s2(),
@@ -65,7 +65,7 @@ def cal_distance_single(block_file, trace_file, x):
 
     tmp = s3()
     tmp.init_trace(trace_file)
-    emulator3 = PccEmulator(
+    emulator3 = Emulator(
         block_file=block_file,
         trace_file=trace_file,
         solution=tmp,
@@ -94,7 +94,7 @@ def plt_qoe(reno_arr, bbr_arr, pic, xidx, size, mtr_arr=None):
 if __name__ == '__main__':
 
     block_file = "config/block.txt"
-    log_file = "output/pcc_emulator.log"
+    log_file = "output/emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
     pic = "qoemodel/qoe_difference.png"
     idx,size = "trace_index",12
