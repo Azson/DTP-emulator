@@ -11,7 +11,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import matplotlib.pyplot as plt
 import numpy as np
-import json, time
+import json, time, shutil
 
 from player.aitrans_solution import Solution as s1
 from player.aitrans_solution2 import Solution as s2
@@ -49,8 +49,9 @@ def cal_distance_single(block_file, trace_file, x):
         SEED=1,
         ENABLE_LOG=False
     )
-    emulator1.run_for_dur(51)
+    emulator1.run_for_dur(21)
     reno_qoe = cal_qoe(x)
+    shutil.copyfile("output/block.log", "qoe_test/reno/" + trace_file.split('/')[-1])
 
     emulator2 = Emulator(
         block_file=block_file,
@@ -60,8 +61,9 @@ def cal_distance_single(block_file, trace_file, x):
         SEED=1,
         ENABLE_LOG=False
     )
-    emulator2.run_for_dur(51)
+    emulator2.run_for_dur(21)
     bbr_qoe = cal_qoe(x)
+    shutil.copyfile("output/block.log", "qoe_test/bbr/" + trace_file.split('/')[-1])
 
     tmp = s3()
     tmp.init_trace(trace_file)
@@ -73,8 +75,9 @@ def cal_distance_single(block_file, trace_file, x):
         SEED=1,
         ENABLE_LOG=False
     )
-    emulator3.run_for_dur(51)
+    emulator3.run_for_dur(21)
     mtr_qoe = cal_qoe(x)
+    shutil.copyfile("output/block.log", "qoe_test/mtr/" + trace_file.split('/')[-1])
     return [reno_qoe, bbr_qoe, mtr_qoe]
 
 
@@ -97,8 +100,8 @@ if __name__ == '__main__':
     log_file = "output/emulator.log"
     log_packet_file = "output/packet_log/packet-0.log"
     pic = "qoemodel/qoe_difference.png"
-    idx,size = "trace_index",12
-    x = 0.82
+    idx,size = "trace_index",len(list(range(120, 1, -5)))
+    x = 0.9
     reno_arr = []
     bbr_arr = []
     mtr_arr = []
@@ -106,10 +109,12 @@ if __name__ == '__main__':
     new_blocks_1 = ["config/block_1/block/1/data_video.csv", "config/block_1/block/1/data_audio.csv"]
     new_blocks_2 = ["scripts/block_5-26-1.csv"]
     for j in range(120, 1, -10):
+
         trace_file = "scripts/first_group/traces_" + str(j) + ".txt"
         st = time.time()
         print("traces {0}, start_time {1}".format(j, st))
-        qoe_difference = cal_distance_single(new_blocks_2, trace_file, x)
+        qoe_difference = cal_distance_single(new_blocks_1, trace_file, x)
+        print(qoe_difference)
         ed = time.time()
         print("end_time {0}, cost {1}".format(ed, ed-st))
         reno_arr.append(qoe_difference[0])
