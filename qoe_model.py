@@ -36,7 +36,6 @@ def cal_qoe(x=0.9):
             urgency.append(1)
         else:
             urgency.append(0)
-            priorities[-1] *= 0
     for i in range(len(urgency)):
         qoe += x * priorities[i] + (1 - x) * urgency[i]
     return qoe
