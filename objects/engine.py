@@ -77,15 +77,12 @@ class Engine():
                         # print("Packet lost at time %f" % self.cur_time)
                     else:
                         # may acked packet which is not in window after packet loss
-                        sender.on_packet_acked(packet.get_rtt(), packet)
-                        # print("Packet acked at time %f" % self.cur_time)
+                        sender.on_packet_acked(packet.get_rtt(), packet, event_time)
                     # for windows-based cc
                     if sender.USE_CWND:
                         # continue ack may use same inflight numbers which will be limited to cwnd but redundancy in log
                         for _packet in sender.slide_windows(self.cur_time, sender.in_event_nums):
                             sender.in_event_nums += 1
-                            # print("Now {}, packet id {}, create time {}".format(self.cur_time, _packet.packet_id, _packet.create_time))
-                            # print("wait for push set {}".format(set([item[2].create_time for item in sender.wait_for_push_packets])))
                             heapq.heappush(self.q, (max(self.cur_time+(1.0 / sender.rate), _packet.create_time), \
                                                 sender, _packet))
 
@@ -245,4 +242,4 @@ class Engine():
         for sender in self.senders:
             debug_print("sender {} wait_for_push_packets size {}".format(sender.id, len(sender.wait_for_push_packets)))
             if sender.application:
-                sender.application.close()
+                sender.application.close(self.cur_time)

@@ -162,7 +162,7 @@ class Sender():
         self.cur_time = max(cur_time, self.cur_time) + 1 / self.pacing_rate
         return max(old_time-cur_time, .0), self.extra
 
-    def on_packet_acked(self, rtt, packet):
+    def on_packet_acked(self, rtt, packet, event_time):
         """
         some operation when packet acknowledged successfully at sender.
         Like updating the numbers of acked and inflight and push the acked information to it's application.
@@ -175,7 +175,7 @@ class Sender():
             self.min_latency = rtt
         self.bytes_in_flight -= BYTES_PER_PACKET
         if self.application:
-            self.application.update_block_status(packet)
+            self.application.update_block_status(packet, event_time)
 
     def on_packet_lost(self, event_time, packet):
         """

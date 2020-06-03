@@ -183,9 +183,10 @@ class Appication_Layer(object):
 
         return packet
 
-    def update_block_status(self, packet):
+    def update_block_status(self, packet, cur_time):
         """update the block finishing status according to the acknowledge packets pushed from sender."""
         block_id = packet.block_info["Block_id"]
+        self.pass_time = cur_time
         # filter repeating acked packet
         if block_id in self.ack_blocks and   \
                 packet.offset in self.ack_blocks[block_id]:
@@ -232,8 +233,9 @@ class Appication_Layer(object):
             return True
         return False
 
-    def close(self):
+    def close(self, cur_time):
         """do some operations when system is closing, like logging the blocks with the packets that have not been acked or sent."""
+        self.pass_time = cur_time
         for block_id, packet_list in self.ack_blocks.items():
             if self.is_sent_block(block_id):
                 continue

@@ -16,7 +16,7 @@ from player.aitrans_solution import Solution as s1
 from player.aitrans_solution2 import Solution as s2
 
 
-def cal_qoe(x=0.82):
+def cal_qoe(x=0.9):
     block_data = []
     urgency = []
     priorities = []
@@ -24,11 +24,15 @@ def cal_qoe(x=0.82):
     tmp = [3, 2, 1]
     with open("output/block.log", "r") as f:
         for line in f.readlines():
-            block_data.append(json.loads(line.replace("'", '"')))
+            data = json.loads(line.replace("'", '"'))
+            # not finished
+            if data["Miss_ddl"] == 0 and data["Size"] - data["Finished_bytes"] <= 0.000001:
+                continue
+            block_data.append(data)
     for block in block_data:
         priority = float(tmp[int(block['Priority'])] / 3)
         priorities.append(priority)
-        if block['Miss_ddl'] == 0:
+        if block["Miss_ddl"] == 0:
             urgency.append(1)
         else:
             urgency.append(0)
@@ -95,12 +99,6 @@ def cal_distance(block_file, trace_file, x):
     return ret, [reno_nums, bbr_nums]
 
 
-def plot_rate(data):
-    new_data = np.array(data, float)
-
-
-
-
 if __name__ == '__main__':
 
     block_file = "config/block.txt"
@@ -127,8 +125,6 @@ if __name__ == '__main__':
         f.write(str(qoes) + '\n')
         f.write(str(best_x) + " * priority + " + str(1 - best_x) + " * ddl " )
 
-    print(rate_nums)
-    plot_rate(rate_nums)
 
 
 

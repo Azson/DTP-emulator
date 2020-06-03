@@ -220,6 +220,11 @@ def plot_cwnd(log_file, rows=None, trace_file=None, time_range=None, scatter=Fal
     for item in plt_data:
         if item["Extra"]["Cwnd"] == last_cwnd:
             continue
+        # last cwnd
+        if last_cwnd != -1:
+            data_time.append(item["Time"])
+            data_cwnd.append(last_cwnd)
+
         last_cwnd = item["Extra"]["Cwnd"]
         data_time.append(item["Time"])
         data_cwnd.append(item["Extra"]["Cwnd"])
