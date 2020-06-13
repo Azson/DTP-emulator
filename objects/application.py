@@ -11,7 +11,10 @@ class Appication_Layer(object):
     def __init__(self,
                  block_file,
                  create_det=1,
-                 bytes_per_packet=1500):
+                 bytes_per_packet=1500,
+                 RS_N = 10,
+                 RS_M = 1
+                 ):
         self.block_file = block_file
         self.block_queue = []
         self.bytes_per_packet = bytes_per_packet
@@ -29,6 +32,13 @@ class Appication_Layer(object):
         self.handle_block(block_file)
         self.ack_blocks = dict()
         self.blocks_status = dict()
+
+        self.rs_n = RS_N
+        self.rs_m = RS_M
+        self.now_block_rs_counter = 0
+
+        # decode rs code
+        self.rs_checker = dict()
 
     def handle_block(self, block_file):
         """
@@ -127,13 +137,18 @@ class Appication_Layer(object):
         :return: Packet.
         """
         self.pass_time = cur_time
-        if self.now_block is None or self.now_block_offset == self.now_block.split_nums:
+        if self.now_block is None or (self.now_block_offset == self.now_block.split_nums and self.now_block_rs_counter == self.now_block.rs_nums):
             self.now_block = self.select_block()
             if self.now_block is None:
                 return None
             self.now_block_offset = 0
+            self.now_block_rs_counter = 0
             self.now_block.split_nums = int(np.ceil(self.now_block.size /
                                             (self.bytes_per_packet - self.head_per_packet)))
+
+            # RS CODE
+            self.now_block.rs_nums = int(np.ceil(self.now_block.split_nums / self.rs_n) * self.rs_m + self.now_block.split_nums)
+
             self.blocks_status[self.now_block.block_id] = self.now_block
 
         # It will only send the packet that already created if mode is None;
@@ -145,20 +160,56 @@ class Appication_Layer(object):
                 self.now_block_offset == self.now_block.split_nums - 1:
             payload = self.now_block.size % (self.bytes_per_packet - self.head_per_packet)
 
-        packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
-                          next_hop=0,
-                          offset=self.now_block_offset,
-                          packet_size=self.bytes_per_packet,
-                          payload=payload,
-                          block_info=self.now_block.get_block_info()
-                          )
-        self.now_block_offset += 1
+        if self.now_block_rs_counter % (self.rs_n + self.rs_m) >= self.rs_n or self.now_block_offset == self.now_block.split_nums:
+            packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
+                            next_hop=0,
+                            offset=0,
+                            packet_size=self.bytes_per_packet,
+                            payload=payload,
+                            block_info=self.now_block.get_block_info(),
+                            rs_label = np.ceil(self.now_block_rs_counter / (self.rs_n + self.rs_m))
+                            )
+        else:
+            packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
+                            next_hop=0,
+                            offset=self.now_block_offset,
+                            packet_size=self.bytes_per_packet,
+                            payload=payload,
+                            block_info=self.now_block.get_block_info(),
+                            rs_label = np.ceil(self.now_block_rs_counter / (self.rs_n + self.rs_m))
+                            )
+            self.now_block_offset += 1
 
+        # print(self.now_block_rs_counter, np.ceil(self.now_block_rs_counter / (self.rs_n + self.rs_m)))
+
+        self.now_block_rs_counter += 1
         return packet
 
     def update_block_status(self, packet):
         """update the block finishing status according to the acknowledge packets pushed from sender."""
         block_id = packet.block_info["Block_id"]
+
+        if block_id not in self.rs_checker:
+            self.rs_checker[block_id] = dict()
+        
+        if packet.rs_label not in self.rs_checker[block_id]:
+            self.rs_checker[block_id][packet.rs_label] = 1
+        else:
+            self.rs_checker[block_id][packet.rs_label] += 1
+            # print(block_id,packet.rs_label,self.rs_checker[block_id][packet.rs_label])
+            if self.rs_checker[block_id][packet.rs_label] >= self.rs_n:
+                rs_group_start = int((packet.rs_label - 1) * self.rs_n)
+                for i in range(self.rs_n):
+                    if rs_group_start + i >= self.blocks_status[block_id].split_nums:
+                        break
+                    if rs_group_start + i not in self.ack_blocks[block_id]:
+                        self.ack_blocks[block_id].append(rs_group_start + i)
+                        
+                        self.blocks_status[block_id].send_delay += packet.send_delay
+                        self.blocks_status[block_id].latency += packet.latency
+                        self.blocks_status[block_id].finished_bytes += packet.payload
+                        self.blocks_status[block_id].finished_nums += 1
+
         # filter repeating acked packet
         if block_id in self.ack_blocks and   \
                 packet.offset in self.ack_blocks[block_id]:
@@ -170,6 +221,8 @@ class Appication_Layer(object):
         # whether or not take pacing delay into consideration?
         self.blocks_status[block_id].latency += packet.latency
         self.blocks_status[block_id].finished_bytes += packet.payload
+
+        self.blocks_status[block_id].finished_nums += 1
 
         if block_id not in self.ack_blocks:
             self.ack_blocks[block_id] = [packet.offset]

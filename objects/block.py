@@ -25,6 +25,10 @@ class Block(object):
         self.miss_ddl = 0
         self.split_nums = -1
         self.finished_bytes = 0
+        self.finished_nums = 0
+        
+        # RS CODE
+        self.rs_nums = -1
 
     @classmethod
     def get_next_block_id(cls):
@@ -62,6 +66,7 @@ class Block(object):
             "Finish_timestamp" : self.finish_timestamp,
             "Miss_ddl" : self.miss_ddl,
             "Split_nums" : self.split_nums,
-            "Finished_bytes" : self.finished_bytes
+            "Finished_bytes" : self.finished_bytes,
+            "Finished_nums" : self.finished_nums,
         })
         return ret
