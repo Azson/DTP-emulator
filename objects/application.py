@@ -13,7 +13,7 @@ class Appication_Layer(object):
                  create_det=1,
                  bytes_per_packet=1500,
                  RS_N = 10,
-                 RS_M = 1
+                 RS_M = 2
                  ):
         self.block_file = block_file
         self.block_queue = []
@@ -35,10 +35,18 @@ class Appication_Layer(object):
 
         self.rs_n = RS_N
         self.rs_m = RS_M
-        self.now_block_rs_counter = 0
 
-        # decode rs code
+        self.now_block_rs_group_counter = 0
+        self.now_group_rs_length_needed = RS_N
+        self.now_group_rs_data_counter = RS_N
+        self.now_group_rs_repair_counter = RS_M
+        self.now_group_rs_start = 0
+
         self.rs_checker = dict()
+
+    def update_rs_parameter(self,n,m):
+        self.rs_n = n
+        self.rs_m = m
 
     def handle_block(self, block_file):
         """
@@ -137,17 +145,14 @@ class Appication_Layer(object):
         :return: Packet.
         """
         self.pass_time = cur_time
-        if self.now_block is None or (self.now_block_offset == self.now_block.split_nums and self.now_block_rs_counter == self.now_block.rs_nums):
+        if self.now_block is None or (self.now_block_offset == self.now_block.split_nums and self.now_group_rs_repair_counter == 0):
             self.now_block = self.select_block()
             if self.now_block is None:
                 return None
             self.now_block_offset = 0
-            self.now_block_rs_counter = 0
+            self.now_block_rs_group_counter = 0
             self.now_block.split_nums = int(np.ceil(self.now_block.size /
                                             (self.bytes_per_packet - self.head_per_packet)))
-
-            # RS CODE
-            self.now_block.rs_nums = int(np.ceil(self.now_block.split_nums / self.rs_n) * self.rs_m + self.now_block.split_nums)
 
             self.blocks_status[self.now_block.block_id] = self.now_block
 
@@ -160,15 +165,31 @@ class Appication_Layer(object):
                 self.now_block_offset == self.now_block.split_nums - 1:
             payload = self.now_block.size % (self.bytes_per_packet - self.head_per_packet)
 
-        if self.now_block_rs_counter % (self.rs_n + self.rs_m) >= self.rs_n or self.now_block_offset == self.now_block.split_nums:
+        if self.now_group_rs_data_counter == 0 and self.now_group_rs_repair_counter == 0:
+            
+            self.now_block_rs_group_counter += 1
+            
+            self.now_group_rs_data_counter = self.rs_n
+            self.now_group_rs_repair_counter = self.rs_m
+            self.now_group_rs_length_needed = self.rs_n
+            self.now_group_rs_start = self.now_block_offset
+
+            if (self.now_block.split_nums - self.now_block_offset) < self.now_group_rs_data_counter:
+                self.now_group_rs_length_needed = self.now_block.split_nums - self.now_block_offset
+                self.now_group_rs_data_counter = self.now_block.split_nums - self.now_block_offset
+
+        if self.now_group_rs_data_counter == 0:
             packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
                             next_hop=0,
-                            offset=0,
+                            offset=-1,
                             packet_size=self.bytes_per_packet,
                             payload=payload,
                             block_info=self.now_block.get_block_info(),
-                            rs_label = np.ceil(self.now_block_rs_counter / (self.rs_n + self.rs_m))
+                            rs_group = self.now_block_rs_group_counter,
+                            rs_length = self.now_group_rs_length_needed,
+                            rs_start = self.now_group_rs_start
                             )
+            self.now_group_rs_repair_counter -= 1
         else:
             packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
                             next_hop=0,
@@ -176,43 +197,49 @@ class Appication_Layer(object):
                             packet_size=self.bytes_per_packet,
                             payload=payload,
                             block_info=self.now_block.get_block_info(),
-                            rs_label = np.ceil(self.now_block_rs_counter / (self.rs_n + self.rs_m))
+                            rs_group = self.now_block_rs_group_counter,
+                            rs_length = self.now_group_rs_length_needed,
+                            rs_start = self.now_group_rs_start
                             )
             self.now_block_offset += 1
+            self.now_group_rs_data_counter -= 1
 
-        # print(self.now_block_rs_counter, np.ceil(self.now_block_rs_counter / (self.rs_n + self.rs_m)))
+        #print(packet.offset,packet.rs_group,packet.rs_length,packet.rs_start)
 
-        self.now_block_rs_counter += 1
         return packet
 
     def update_block_status(self, packet):
         """update the block finishing status according to the acknowledge packets pushed from sender."""
         block_id = packet.block_info["Block_id"]
-
-        if block_id not in self.rs_checker:
-            self.rs_checker[block_id] = dict()
-        
-        if packet.rs_label not in self.rs_checker[block_id]:
-            self.rs_checker[block_id][packet.rs_label] = 1
-        else:
-            self.rs_checker[block_id][packet.rs_label] += 1
-            # print(block_id,packet.rs_label,self.rs_checker[block_id][packet.rs_label])
-            if self.rs_checker[block_id][packet.rs_label] >= self.rs_n:
-                rs_group_start = int((packet.rs_label - 1) * self.rs_n)
-                for i in range(self.rs_n):
-                    if rs_group_start + i >= self.blocks_status[block_id].split_nums:
-                        break
-                    if rs_group_start + i not in self.ack_blocks[block_id]:
-                        self.ack_blocks[block_id].append(rs_group_start + i)
-                        
-                        self.blocks_status[block_id].send_delay += packet.send_delay
-                        self.blocks_status[block_id].latency += packet.latency
-                        self.blocks_status[block_id].finished_bytes += packet.payload
-                        self.blocks_status[block_id].finished_nums += 1
+        rs_group = packet.rs_group
+        rs_group_length_needed = packet.rs_length
+        rs_group_start = packet.rs_start
 
         # filter repeating acked packet
         if block_id in self.ack_blocks and   \
                 packet.offset in self.ack_blocks[block_id]:
+            return
+
+        if block_id not in self.rs_checker:
+            self.rs_checker[block_id] = dict()
+        
+        if rs_group not in self.rs_checker[block_id]:
+            self.rs_checker[block_id][rs_group] = 1
+        else:
+            self.rs_checker[block_id][rs_group] += 1
+            if packet.offset == -1 and self.rs_checker[block_id][rs_group] == rs_group_length_needed:
+                for i in range(rs_group_length_needed):
+                    if rs_group_start + i not in self.ack_blocks[block_id]:
+                        self.ack_blocks[block_id].append(rs_group_start + i)
+                        
+                        print("repair",rs_group_start + i,block_id)
+
+                        self.blocks_status[block_id].send_delay += packet.send_delay
+                        self.blocks_status[block_id].latency += packet.latency
+                        #self.blocks_status[block_id].finished_bytes += packet.payload
+                        self.blocks_status[block_id].finished_nums += 1
+
+        if packet.offset == -1:
             return
 
         # update block information.

@@ -6,6 +6,8 @@ class CongestionControl(object):
         self.send_rate = float("inf")
         self.pacing_rate = float("inf")
         self.call_nums = 0
+        self.rs_n = 10
+        self.rs_m = 1
 
     def make_decision(self, cur_time):
         """call this when sender send packet"""
@@ -14,7 +16,9 @@ class CongestionControl(object):
         output = {
             "cwnd" : self.cwnd,
             "send_rate" : self.send_rate,
-            "extra" : { }
+            "extra" : { },
+            "rs_n" : self.rs_n,
+            "rs_m" : self.rs_m
         }
 
         return output

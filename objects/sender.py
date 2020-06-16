@@ -40,6 +40,9 @@ class Sender():
         # for player
         self.wait_for_select_packets = []
 
+        self.rs_n = 10
+        self.rs_m = 1
+
     _next_id = 1
 
     @classmethod
@@ -54,6 +57,7 @@ class Sender():
 
     @measure_time()
     def new_packet(self, cur_time, mode):
+        self.application.update_rs_parameter(self.rs_n, self.rs_m)
         """get new packet from it's application."""
         packet = self.application.get_next_packet(cur_time, mode)
         if packet:
@@ -126,6 +130,8 @@ class Sender():
         self.rate = ret["send_rate"] if "send_rate" in ret else self.rate
         self.cwnd = ret["cwnd"] if "cwnd" in ret else self.cwnd
         self.extra = ret["extra"] if "extra" in ret else self.extra
+        self.rs_n = ret["rs_n"] if "rs_n" in ret else self.rs_n
+        self.rs_m = ret["rs_m"] if "rs_m" in ret else self.rs_m
         if constant.USE_CWND:
             return int(self.bytes_in_flight) / BYTES_PER_PACKET < self.cwnd
         else:

@@ -14,7 +14,9 @@ class Packet(object):
                  pacing_delay=.0,
                  latency=.0,
                  block_info={},
-                 rs_label=0
+                 rs_group=0,
+                 rs_length=0,
+                 rs_start=0
                  ):
         self.packet_type = packet_type
         self.create_time = create_time
@@ -31,7 +33,9 @@ class Packet(object):
         self.latency = latency
         self.extra = {}
         self.block_info = block_info
-        self.rs_label = rs_label
+        self.rs_group = rs_group
+        self.rs_length = rs_length
+        self.rs_start = rs_start
 
         if packet_id is None:
             self.packet_id = Packet._get_next_packet()
@@ -68,7 +72,9 @@ class Packet(object):
             "Packet_size" : self.packet_size,
             "Extra" : self.extra,
             "Block_info" : self.block_info,
-            "RS_label" : self.rs_label,
+            "RS_group" : self.rs_group,
+            "RS_length" : self.rs_length,
+            "RS_start" : self.rs_start,
         }
         return print_data
 
