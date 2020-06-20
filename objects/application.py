@@ -13,7 +13,7 @@ class Appication_Layer(object):
                  create_det=1,
                  bytes_per_packet=1500,
                  RS_N = 10,
-                 RS_M = 2
+                 RS_M = 0
                  ):
         self.block_file = block_file
         self.block_queue = []
@@ -37,6 +37,7 @@ class Appication_Layer(object):
         self.rs_m = RS_M
 
         self.now_block_rs_group_counter = 0
+        self.now_block_rs_offset = -1
         self.now_group_rs_length_needed = RS_N
         self.now_group_rs_data_counter = RS_N
         self.now_group_rs_repair_counter = RS_M
@@ -44,9 +45,25 @@ class Appication_Layer(object):
 
         self.rs_checker = dict()
 
-    def update_rs_parameter(self,n,m):
+    def update_rs_parameter(self, n, m):
         self.rs_n = n
         self.rs_m = m
+
+    def is_retrans_needed(self, packet):
+        block_id = packet.block_info["Block_id"]
+        rs_group = packet.rs_group
+        rs_group_length_needed = packet.rs_length
+
+        if block_id not in self.rs_checker:
+            return True
+        
+        if rs_group not in self.rs_checker[block_id]:
+            return True
+        
+        if self.rs_checker[block_id][rs_group] < rs_group_length_needed:
+            return True
+
+        return False
 
     def handle_block(self, block_file):
         """
@@ -150,6 +167,7 @@ class Appication_Layer(object):
             if self.now_block is None:
                 return None
             self.now_block_offset = 0
+            self.now_block_rs_offset = -1
             self.now_block_rs_group_counter = 0
             self.now_block.split_nums = int(np.ceil(self.now_block.size /
                                             (self.bytes_per_packet - self.head_per_packet)))
@@ -181,7 +199,7 @@ class Appication_Layer(object):
         if self.now_group_rs_data_counter == 0:
             packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
                             next_hop=0,
-                            offset=-1,
+                            offset=self.now_block_rs_offset,
                             packet_size=self.bytes_per_packet,
                             payload=payload,
                             block_info=self.now_block.get_block_info(),
@@ -189,6 +207,7 @@ class Appication_Layer(object):
                             rs_length = self.now_group_rs_length_needed,
                             rs_start = self.now_group_rs_start
                             )
+            self.now_block_rs_offset -= 1
             self.now_group_rs_repair_counter -= 1
         else:
             packet = Packet(create_time=max(cur_time, self.now_block.timestamp),
@@ -227,20 +246,28 @@ class Appication_Layer(object):
             self.rs_checker[block_id][rs_group] = 1
         else:
             self.rs_checker[block_id][rs_group] += 1
-            if packet.offset == -1 and self.rs_checker[block_id][rs_group] == rs_group_length_needed:
+            if self.rs_checker[block_id][rs_group] == rs_group_length_needed:
                 for i in range(rs_group_length_needed):
                     if rs_group_start + i not in self.ack_blocks[block_id]:
                         self.ack_blocks[block_id].append(rs_group_start + i)
                         
-                        print("repair",rs_group_start + i,block_id)
+                        if rs_group_start + i != packet.offset :
+                            print("repair",rs_group_start + i,block_id)
 
                         self.blocks_status[block_id].send_delay += packet.send_delay
                         self.blocks_status[block_id].latency += packet.latency
                         #self.blocks_status[block_id].finished_bytes += packet.payload
                         self.blocks_status[block_id].finished_nums += 1
 
-        if packet.offset == -1:
+        if packet.offset < 0:
             return
+        
+        if self.is_sent_block(block_id):
+            self.blocks_status[block_id].finish_timestamp = packet.finish_time
+            self.log_block(self.blocks_status[block_id])
+
+        if self.rs_checker[block_id][rs_group] >= rs_group_length_needed:
+            return 
 
         # update block information.
         # Which is better? Save packet individual value or sum value

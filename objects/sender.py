@@ -41,7 +41,7 @@ class Sender():
         self.wait_for_select_packets = []
 
         self.rs_n = 10
-        self.rs_m = 1
+        self.rs_m = 0
 
     _next_id = 1
 
@@ -178,9 +178,16 @@ class Sender():
         """
         self.lost += 1
         self.bytes_in_flight -= BYTES_PER_PACKET
+        
         # do retrans if lost
         # retrans_packet = packet.create_retrans_packet(event_time)
         # self.wait_for_push_packets.append([event_time, self, retrans_packet])
+
+        # do retrans if lost and FEC miss
+        if self.application.is_retrans_needed(packet):
+            print("retrans",packet.offset,packet.block_info["Block_id"])
+            retrans_packet = packet.create_retrans_packet(event_time)
+            self.wait_for_push_packets.append([event_time, self, retrans_packet])
 
     def set_rate(self, new_rate):
         self.rate = new_rate

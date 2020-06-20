@@ -85,7 +85,10 @@ class Packet(object):
                       offset=self.offset,
                       packet_size=self.packet_size,
                       payload=self.payload,
-                      block_info=self.block_info)
+                      block_info=self.block_info,
+                      rs_group=self.rs_group,
+                      rs_length=self.rs_length,
+                      rs_start=self.rs_start)
 
     def get_hash_val(self):
         """get the hash value of this packet according to it's member variables."""
